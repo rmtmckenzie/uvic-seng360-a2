@@ -1,0 +1,507 @@
+import os
+
+class fdb:
+	'''
+	Purpose
+		Constructor. Read types.py from a fdb_question directory
+		  and initialize self.values that is used to construct
+		  a fdb question.
+	Precondition
+		path is a valid path to a directory under cqg_1.23/question_library
+		types.py exists under the question directory given by path and
+		  is readable
+		types.py comprises a legal FDB question that passes the question
+		  verifier
+	'''
+	# FIXME: functional tests relied on old __init__(); update them
+	def __init__(self,question_library_path,question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(os.path.join(
+		 question_library_path,question_path,'cqg_config.py'))
+
+		self.values = config.values
+		self.path = config.path
+
+	def get_question_library_path(self):
+		return self.question_library_path
+	
+	def get_question_path(self):
+		return self.question_path
+
+	'''
+	Purpose
+		Returns the HTML string to be inserted in the main table cell
+	Precondition
+		get_input_element_ids() returns a list of keys.
+		types.py comprises a legal FDB question that passes the question
+		  verifier
+	'''
+	def get_html(self,answer):
+		# validate answer dictionary
+# FIXME: is type check necessary/good/worthwhile? probably not...
+#		if type(answer) != dict:
+#			err_msg = 'FDB: get_html: answer is not a dictionry'
+#			print err_msg
+#			return err_msg
+		for key in self.get_input_element_ids():
+			if not answer.has_key(key):
+				err_msg = 'FDB: get_html: element id \''+key+\
+					'\' does not exists in answer dict'
+				print err_msg
+				return err_msg
+
+		html = html_base
+
+		# Build traffic table
+		html += html_base_1
+		html += self.build_traffic_table_html(answer)
+
+		# Build FDB table
+		html += html_base_2
+		html += self.build_fdb_html(answer)
+		
+		# Build new frame table
+		html += self.build_new_frame_question(answer)
+
+		# Build forward result question
+		html += self.build_forward_result_question(answer)
+
+		html += '</td></tr></table>'
+		return html
+
+	'''
+	Purpose
+		Returns a list of strings containing the element ids of the
+		  HTML elements returned by get_html()
+	Precondition
+		keys 'traffic_table', 'fdb', and 'f_result' exist in
+		  self.values
+	'''
+	def get_input_element_ids(self):
+		result_list = []
+		for r in range(len(self.values['traffic_table'])):
+			for c in range(len(self.values['traffic_table'][r])):
+				cell = self.values['traffic_table'][r][c]
+				if cell is None:
+					id = str(r)+'-'+str(c)
+					result_list.append(id)
+
+		for i in range(len(self.values['fdb'])):
+			if self.values['fdb'][i] is None:
+				result_list.append('fdb-'+str(i))
+
+		keys = ('f_result_src', 'f_result_dest', 'f_result_port',\
+			'f_result')
+		for i in range(len(self.values['f_result'])):
+			if self.values['f_result'][i] is None:
+				result_list.append(keys[i])		
+		return result_list
+
+	'''
+	Purpose
+		Performs answer checking computation and returns a boolean 
+		  corresponding to correct (true) or incorrect (false)
+	Precondition
+		get_input_element_ids() returns a list of keys.
+		types.py comprises a legal FDB question that passes the question
+		  verifier
+	'''
+	def check_answer(self,answer):
+# FIXME: is type check necessary/good/worthwhile? probably not...
+#		# validate answer dictionary
+#		if type(answer) != dict:
+#			err_msg = 'FDB: check_answer: answer is not a dictionry; type is '+str(type(answer))
+#			raise TypeError(err_msg)
+
+		for key in self.get_input_element_ids():
+			if not answer.has_key(key):
+				err_msg = 'FDB: check_answer: element id \''+key+\
+					'\' does not exists in answer dict'
+				return False
+			else:
+				if type(answer[key]) == list:
+					for item in answer[key]:
+						if type(item) != str:
+							err_msg = 'FDB: check_answer: answer[\''+key+\
+								'\'] is not a string'
+							return False
+				elif type(answer[key]) != str:
+					err_msg = 'FDB: check_answer: answer[\''+key+\
+						'\'] is not a string'
+					return False
+		
+		# Process user input for traffic table, FDB, and forward result
+		traffic_table = self.process_traffic_table(answer)
+		actual_fdb = self.process_fdb(answer)
+		actual_forward_result = self.process_forward_result(answer)
+		actual_new_frame = self.process_new_frame(answer)
+
+		# Calculate expected FDB and check against actual
+		expected_fdb = self.calculate_fdb(traffic_table)
+		if expected_fdb == None:
+			return False	
+		result_fdb = (actual_fdb == expected_fdb)
+
+		# Calculate expected forward result and check against actual
+		expected_forward_result = self.calculate_forward_result(actual_new_frame,\
+						expected_fdb)
+		if expected_forward_result == None:
+			return False	
+
+		result_forward = \
+			(expected_forward_result == actual_forward_result)
+
+		return result_fdb and result_forward 
+
+	'''
+	Purpose
+		Returns a traffic table with both author-defined entries and
+		  and inputs from the student 
+	Precondition
+		self.values['traffic_table'] is addressable
+		A None in self.values['traffic_table'][i][j] has a corresponding
+		  key-value pair in answer. The keys are of the form 'i-j'.
+	'''
+	def process_traffic_table(self,answer):
+		traffic_table = self.values['traffic_table']
+		result_traffic_table = []
+		for r in range(len(traffic_table)):
+			result_traffic_table.append(list(traffic_table[r]))
+			for c in range(len(result_traffic_table[r])):
+				if result_traffic_table[r][c] is None:
+					index = str(r)+'-'+str(c)
+					if answer[index].isdigit() == True:
+						answer[index] = int(answer[index])
+					result_traffic_table[r][c] = answer[index]
+		return result_traffic_table
+
+	'''
+	Purpose
+		Returns FDB with both author-defined entries and inputs
+		  from the student 
+	Precondition
+		self.values['fdb'] is addressable
+		A None in self.values['fdb'] has a corresponding key-value pair in answer.
+		  The keys are of the form 'fdb-i'.
+	'''
+	def process_fdb(self,answer):
+		fdb = self.values['fdb']
+		# Sanitize the answer and construct the actual FDB
+		actual_fdb = [[],[],[],[]]
+		for ind in range(len(fdb)):
+			item = fdb[ind]
+			if item != None and type(item) is list:
+				actual_fdb[ind] += item
+			key = 'fdb-'+str(ind)
+			if key in answer and answer[key] != '':
+				for item in answer[key]:	
+					actual_fdb[ind] += item
+				actual_fdb[ind].sort()
+		return actual_fdb
+
+	'''
+	Purpose
+		Returns forward result input by student or specified by author
+	Precondition
+		self.values['f_result'][3] is addressable
+		If self.values['f_result'][3] is None, then there is a corresponding
+		 key-value pair in answer. The key is 'f_result'. 
+	'''
+	def process_forward_result(self,answer):
+		# Split the answer and remove duplicate
+		f_result = self.values['f_result'][3]
+		actual_forward_result = []
+		if f_result is None:
+			for item in answer['f_result']:
+				actual_forward_result += item
+			actual_forward_result.sort()
+		else:
+			actual_forward_result = [str(i) for i in f_result]
+		return actual_forward_result
+
+	'''
+	Purpose
+		Returns the extra frame input by student or specified by author
+	Precondition
+		len(self.values['f_result']) == 4
+		Key-value pairs with keys 'f_result_src', 'f_result_dest', and
+		  'f_result_port' exist in answer.
+	'''
+	def process_new_frame(self,answer):
+		result_frame = []
+		new_frame = self.values['f_result'][0:3]
+		keys = ['f_result_src', 'f_result_dest', 'f_result_port']
+		for i in range(len(new_frame)):
+			actual_value = new_frame[i]
+			if actual_value == None:
+				actual_value = answer[keys[i]]
+			result_frame.append(str(actual_value))
+		return result_frame
+
+	'''
+	Purpose
+		Returns FDB calculated based on the given traffic_table,
+		  returns None if given traffic_table is invalid.
+	Precondition
+		len(traffic_table[i]) == 3
+	'''
+	def calculate_fdb(self,traffic_table):
+		fdb = [[],[],[],[]]
+		for frame in traffic_table:
+			src,dest,recv_port = frame
+			if type(src) is not str or type(dest) is not str or\
+			  type(recv_port) is not int:
+				return None
+			if recv_port <= 0 or recv_port > 4:
+				return None
+			if src == '' or dest == '':
+				return None 
+			if recv_port-1 in range(len(fdb)):
+				# serch the table for existing entry
+				for port in fdb:
+					if src in port:
+						port.remove(src)
+				fdb[recv_port-1].append(src)
+				fdb[recv_port-1].sort()
+		return fdb
+
+	'''
+	Purpose
+		Returns forward result given a correct FDB and a new frame
+		  returns None if given new_frame or expected_fdb is invalid
+	Precondition
+		len(new_frame) == 3
+		len(expected_fdb) == 4
+		type(expected_fdb[i]) == list
+		type(expected_fdb[i][j]) == str
+		expected_fdb[i][j] in ['a','b','c','d','e'] 
+	'''
+	def calculate_forward_result(self,new_frame,expected_fdb):
+		# Consult the FDB for which ports to forward the new frame
+		# eg. expected forward result
+		forward_result = []
+		src,dest,recv_port = new_frame[0],new_frame[1],new_frame[2]
+		if type(src) != str or src not in ['a','b','c','d','e']:
+			return None
+		if type(dest) != str or  dest not in ['a','b','c','d','e']:
+			return None
+		if int(recv_port) not in range(1,5):
+			return None
+		for ind in range(len(expected_fdb)):
+			if ind != (int(recv_port)-1):
+				if dest in expected_fdb[ind]:
+					forward_result.append(str(ind+1))
+					forward_result.sort() 
+		if len(forward_result) == 0:
+			forward_result = ['1','2','3','4']
+			forward_result.remove(str(recv_port))
+		return forward_result
+
+	'''
+	Purpose
+		Returns the html for the traffic table with a drop-down menu in
+		  a 'hot' cells.
+	Precondition
+		If traffic_table[i][j] is None then answer['i-j'] must exists
+		  where i is 0..N and j is 0..2
+	'''
+	def build_traffic_table_html(self,answer):
+		traffic_table = self.values['traffic_table']
+		result_html = traffic_table_html
+		for r in range(len(traffic_table)):
+			result_html += '<tr>'
+			for c in range(len(traffic_table[r])):
+				cell = traffic_table[r][c]
+				result_html += '<td align=center>'
+				if cell is None:
+					id = str(r)+'-'+str(c)
+					actual_value = str(answer[id]) if answer[id] != None else ''
+					result_html += '<select name="' + id + '">'
+					if c == 0 or c == 1:
+						# the cell is a mac address
+						result_html += '<option value="">-Select MAC-</option>'
+						for a in range(ord('a'),ord('f')):
+							mac = chr(a)	
+							result_html += '<option value="' + mac + '"'
+							if actual_value == mac:
+								result_html += ' selected'
+							result_html += '>' + mac + '</option>'
+					elif c == 2: 
+						# the cell is a port
+						result_html += '<option value="">-Select port-</option>'
+						for p in range(1,5):
+							port = str(p)
+							result_html += '<option value="' + port +'"'
+							if port == actual_value:
+								result_html += ' selected'
+							result_html += '>' + port + '</option>'
+					result_html += '</select>'
+				else:
+					result_html += str(cell)
+				result_html += '</td>'
+			result_html += '</tr>'
+		result_html += '</table><br>'
+		return result_html
+
+	'''
+	Purpose
+		returns the html for the FDB table
+	Precondition
+		number of ports (cols) is 4
+		if fdb[i] is None, then answer['fdb-i'] must exists
+		  where i is 0..3
+	'''
+	def build_fdb_html(self,answer): 
+		fdb = self.values['fdb']
+		result_html = fdb_html
+		result_html += '<tr>'
+		for i in range(len(fdb)):
+			result_html += '<td width="25%" align="center">'
+			result = fdb[i]
+			if result == None:
+				id = 'fdb-' + str(i)
+				actual_value = []
+				if answer[id] != None:
+					actual_value = answer[id]
+				result_html += '<input type="hidden" name="' + id + '" value="">'
+				result_html += '<select style="background:#FFFFFF;" multiple="yes" name="' + id + '">'
+				result_html += '<option value="" disabled="disabled">-Select MAC(s)-</option>'
+				for a in range(ord('a'),ord('f')):
+					mac = chr(a)		
+					result_html += '<option value="' + mac + '"'
+					if mac in actual_value:
+						result_html += ' selected'
+					result_html += '>' + mac + '</option>'
+				result_html += '</select>'
+			else:
+				if type(result) == list:
+					result_html += str(",".join(result))
+				else:
+					result_html += str(result)
+			result_html += '</td>'
+		result_html += '</tr></table><br>'
+		return result_html
+
+	'''
+	Purpose
+		Returns the html for the new frame table
+	Precondition
+		len(self.values['f_result']) == 4
+		if self.values['f_result'][0..2] is None, then for keys
+	  	  'f_result_src', 'f_result_dest', and 'f_result_port' are
+		  in answer.
+	'''
+	def build_new_frame_question(self,answer):
+                traffic_table = self.values['traffic_table']
+                f_result = self.values['f_result']
+                result_html = html_base_3.replace('$num',str(len(traffic_table)+1))
+		keys = ('f_result_src', 'f_result_dest', 'f_result_port')
+		marks = ('$src', '$dest', '$port_num')
+                for ind in range(len(f_result[:-1])):
+                        replace_html = ''
+                        if f_result[ind] == None:
+                                actual_value = answer[keys[ind]] if answer[keys[ind]] != None else ''
+                                replace_html += '<select name="' + keys[ind] + '">'
+                                if keys[ind] == 'f_result_src' or keys[ind] == 'f_result_dest':
+                                        replace_html += '<option value="">-Select MAC-</option>'
+                                        for i in range(ord('a'),ord('f')):
+                                                mac = chr(i)
+                                                replace_html += '<option value="' + mac + '"'
+                                                if actual_value == mac:
+                                                        replace_html += ' selected'
+                                                replace_html += '>' + mac + '</option>'
+                                else:
+                                        replace_html += '<option value="">-Select port-</option>'
+                                        for i in range(1,5):
+                                                replace_html += '<option value"' + str(i) + '"'
+                                                if actual_value == str(i):
+                                                        replace_html += ' selected'
+                                                replace_html += '>' + str(i) + '</option>'
+                                replace_html += '</select>'
+                                result_html = result_html.replace(marks[ind], replace_html)
+                        else:
+                                result_html = result_html.replace(marks[ind], str(f_result[ind]))
+		return result_html
+
+
+	'''
+	Purpose
+		Returns the html of forward result
+	Precondition
+		self.values['f_result'][3] is addressable
+		if self.values['f_result'][3] is None, then answer['f_result'] must exists
+	'''
+	def build_forward_result_question(self,answer):
+		traffic_table = self.values['traffic_table']
+		f_result = self.values['f_result']
+		result_html = html_base_4
+		if f_result[3] == None:
+			actual_value = answer['f_result'] if answer['f_result'] != None else ''
+			result_html += '<input type="HIDDEN" name="f_result" value="">'
+			for i in range(1,5):
+				result_html += '<input type="checkbox" name="f_result" value="' + str(i) + '"'
+				if str(i) in actual_value:
+					result_html +=	' checked'
+				result_html += '>' + str(i)
+				if i != 4:
+					result_html += ' '
+		else:
+			for i in range(1,5):
+				if type(f_result[3]) == list:
+					if i in f_result[3]:
+						result_html += '&#9745;'
+					else:
+						result_html += '&#9744;'
+				else:
+					if f_result[3] == str(i):
+						result_html += '&#9745;'
+					else:
+						result_html += '&#9744;'
+				result_html += str(i)
+				result_html += '' if i == 4 else ' '
+		return result_html
+
+html_base = '''
+<table cellspacing="0" style="border:0px;height:100%;"><tr><th bgcolor="#ff9900">FDB</th></tr>
+<tr>
+<td rowspan="9" class=padding>
+'''
+
+html_base_1 = '''
+Suppose that the following frames are received on a 4-port
+Ethernet switch:<br>
+'''
+
+html_base_2 = '''
+Assuming that the forwarding database was initially empty, show its content
+<b>just after</b> the switch has processed the frames above <b>(Ctrl+click to
+select/deselect multiple values)</b>:<br>
+'''
+
+html_base_3 = '''
+Suppose that a <b>#$num frame</b> as follows is received:
+<table align="center">
+<tr><th>Source Mac address</th><th>Destination MAC address</th><th>Received port</th>
+<tr><td align=center>$src</td><td align=center>$dest</td><td align=center>$port_num</td>
+</table><br>
+'''
+
+html_base_4 = '''
+On which port(s) will the switch transmit this frame?<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Port(s):
+'''
+
+traffic_table_html = '''
+<table align=center>
+<tr><th colspan=2 align=center>Ethernet Frame</th></tr>
+<tr>
+<th align=center>Source MAC address</th>
+<th align=center>Destination MAC address</th>
+<th align=center>Received port</th>
+'''
+
+fdb_html = '''
+<table align=center>
+<tr><th>Port 1</th><th>Port 2</th><th>Port 3</th><th>Port 4</th></tr>
+'''

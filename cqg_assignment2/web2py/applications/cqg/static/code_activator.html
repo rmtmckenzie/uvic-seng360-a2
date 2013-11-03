@@ -1,0 +1,58 @@
+<html><body>
+
+Each Code Activator question displays four rectangular cells:
+<ol>
+<li>
+<i>code cell</i>: source code for a computer program
+written in C, Java, or Python,
+<li>
+<i>argv cell</i>: text available as command line arguments,
+<li>
+<i>stdin cell</i>: text available as standard input, and
+<li>
+<i>stdout cell</i>: text written as standard input.
+</ol>
+Each cell contains some fixed text and some text fields.
+Your job is to fill in the text fields.
+<p>
+There are three task types, each with slightly different rules:
+<ol>
+<li>
+<b>Input-output</b>:
+When you press the <i>Check answer</i> button, the code is executed.
+The actual output of the execution is saved.
+Your answer is correct if the actual output is the same as
+the contents of the stdout cell.
+<p>
+Examples:
+<a href="../quiz?spec=tutorial/code_activator/c_min_io_alone">C</a>
+<!a href="../quiz?spec=java_min_io_alone">Java</a>
+<a href="../quiz?spec=python_min_io_alone">Python</a>
+<li>
+<b>Bullseye</b>:
+In this task, the code cell contains one or more
+<font color="blue"><b>highlighted</b></font> lines.
+When you press the <i>Check answer</i> button, the code is executed.
+Your answer is correct if each of the highlighted lines
+was executed at least once.
+<p>
+Examples:
+<a href="../quiz?spec=tutorial/code_activator/c_min_be_alone">C</a>
+<!a href="../quiz?spec=java_min_be_alone">Java</a>
+<a href="../quiz?spec=python_min_be_alone">Python</a>
+<li>
+<b>Find-the-failure</b>:
+In this task, the code cell contains a specification and an implementation
+of a function, and an invocation of that function.
+When you press the <i>Check answer</i> button, the code is executed.
+Your answer is correct if the return value of the function
+is incorrect, with respect to the specification.
+<p>
+Examples:
+<a href="../quiz?spec=tutorial/code_activator/c_min_ff_alone">C</a>
+<!a href="../quiz?spec=java_min_ff_alone">Java</a>
+<a href="../quiz?spec=python_min_ff_alone">Python</a>
+</ol>
+
+<body>
+<html>

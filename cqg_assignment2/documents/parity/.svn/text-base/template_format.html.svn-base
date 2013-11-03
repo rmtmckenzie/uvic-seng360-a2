@@ -1,0 +1,20 @@
+<h2>Question type: parity</h2>
+A template file in the parity question type
+must contain a definition of the variable <tt>tuples</tt>
+which must be a list of the form:
+<pre>
+[group_prefix,
+	[bitstring, parity, hotspots],
+	[bitstring, parity, hotspots],
+	...
+],
+[group_prefix,
+	...
+],
+...
+</pre>
+where <tt>group_prefix</tt> is a unique string, <tt>bitstring</tt> is a nonempy
+string containing only the characters <tt>'0'</tt> and <tt>'1'</tt>,
+<tt>parity</tt> is <tt>0</tt> or <tt>1</tt>, and <tt>hotspots</tt> is a list of
+ints that are indexes into <tt>bitstring</tt>+<tt>parity</tt> (i.e., the 8-bit
+codeword).

@@ -1,0 +1,27 @@
+<h2>Question type: hamming</h2>
+A template file in the hamming question type
+must contain a definition of the variable <tt>tuples</tt>
+which must be a list of the form:
+<pre>
+[
+	[group_prefix,
+		[message, parity, hotspots],
+		[message, parity, hotspots],
+		...
+	],
+	[group_prefix,
+		...
+	],
+	...
+]
+</pre>
+where <tt>group_prefix</tt> is a unique string, <tt>message</tt> is a nonempy
+string containing only the characters <tt>'0'</tt> and <tt>'1'</tt>,
+<tt>parity</tt> is <tt>0</tt> or <tt>1</tt>, and <tt>hotspots</tt> is either:
+<ul>
+<li>for a 'fill'-type question: a list of ints that are 1-relative indexes into
+the Hamming code word formed from <tt>message</tt> and <tt>parity</tt><br />
+or:
+<li>for a 'finderror'-type question: a single int that is a 1-relative index
+into the Hamming code word formed from <tt>message</tt> and <tt>parity</tt>
+</ul>

@@ -1,0 +1,138 @@
+Index: quiz.py
+===================================================================
+--- quiz.py	(revision 440)
++++ quiz.py	(working copy)
+@@ -42,14 +42,14 @@
+ 		self.question_lib_path = "../question_library/"
+ 		if 'question_library' in dir(quiz_spec_file):
+ 			self.question_lib_path = quiz_spec_file.question_library
++
+ 		for q in get_questions(quiz_spec_file.question_list,self.question_lib_path):
+-			# TODO: change types to a better name
+-			config_file = os.path.join(q[1],'cqg_config.py')
++			config_file = os.path.join(self.question_lib_path,q[1],'cqg_config.py')
+ 			try:
+ 				config = file_util.dynamic_import(config_file)
+ 				# construct question object
+ 				exec('import question.'+config.product_family)
+-				exec('question_obj = question.'+config.product_family+'.'+config.question_type+'(q[1])')
++				exec('question_obj = question.'+config.product_family+'.'+config.question_type+'(self.question_lib_path,q[1])')
+ 			except:
+ 				trace = traceback.format_exc()
+ 				errorlog.write("fatal: quiz spec OK, but question "+str(q)+" is problematic; full trace:\n"+trace)
+@@ -65,12 +65,27 @@
+ 	Exposure
+ 		public
+ 	Purpose
+-		sets logging name for a marked quiz
++		sets logging name for a marked quiz and initializes the log
++		file by populating it with 'unanswered' entries for each
++		question
+ 	Precondition
+-		name is a string
++		name is a string of chars [a-zA-Z0-9_]
+ 	'''
+ 	def set_log_name(self,name):
+ 		self.log_name = name
++
++		# initialize log file
++		for i in range(len(self.question_list)):
++			# log question path relative to question library
++			log.write(
++				self.log_dir,
++				self.log_name,
++				i,
++				self.question_list[i].get_question_path(),
++				0, # mark
++				'', # answer
++				0 # time
++			)
+ 		
+ 	'''
+ 	Exposure
+@@ -194,10 +209,7 @@
+ 				self.log_dir,
+ 				self.log_name,
+ 				q_num,
+-				#FIXME: update docs to say path is public, or better yet,
+-				#implement question.getIdentifier() as described in giant todo
+-				#file
+-				question.path, 
++				question.get_question_path(), 
+ 				int(answer_correct) * self.mark_list[q_num],
+ 				dict(self.answer_list[q_num]),
+ 				int(time.time()) - self.timer
+@@ -284,25 +296,34 @@
+ 	#q_num + 1 is for display only; everywhere else, q_num is an array index
+ 	return '<td align="right">Question '+str(q_num+1)+' of '+str(total)+' ('+str(mark)+' Marks)</td>'
+ 
+-def get_question_dirs(sub_dir,question_library):
++def get_question_dirs(question_library,subdirectory):
+ 	'''
+ 	purpose
+ 		return all question directories in question_library/sub_dir
++		result is equivalent to the command line:
++		cd question_library; find -name cqg_config.py | sed 's/cqg_config.py$//'
+ 	precondition
+-		question_library is a existing directory
+-		sub_dir is a directory in question_library
++		question_library is a readable directory 
++		subdirectory is a readable directory below question_library,
++		 or the empty string
+ 	'''
+ 	all_questions = []
+-	L = os.listdir(os.path.join(question_library,sub_dir))
++	L = os.listdir(os.path.join(question_library,subdirectory))
+ 	for d in L:
+-		p = os.path.join(question_library,sub_dir,d)
+-		if not os.path.isdir(p):
++		p = os.path.join(subdirectory,d)
++
++		# if p is a file, it cannot be a question dir; ignore it
++		if not os.path.isdir(os.path.join(question_library,p)):
+ 			continue
+-		t = os.path.join(question_library,sub_dir,d,'cqg_config.py')
++
++		t = os.path.join(question_library,p,'cqg_config.py')
+ 		if os.path.isfile(t):
++			# p is a question
+ 			all_questions.append(p)
+ 		else:
+-			all_questions += get_question_dirs(p,question_library)
++			# p is a non-question subdir; may contain more questions
++			all_questions += get_question_dirs(question_library,p)
++
+ 	return all_questions
+ 
+ '''
+@@ -316,23 +337,25 @@
+ 	all_questions = get_question_dirs(qlib_path,'')
+ 	questions = []
+ 	for question in question_list:
+-		# select from question list: randomly selection/order
+ 		mark = question[0]
+ 		count = question[1]
++
+ 		sources = []
+ 		if type(question[2]) == list:
+ 			for p in question[2]:
+-				sources.append(os.path.abspath(os.path.join(
+-				 qlib_path,p)))
++				sources.append(p)
+ 		else:
+ 			for p in all_questions:
+ 				if re.search(question[2],p) != None:
+-					sources.append(os.path.abspath(
+-					 os.path.join(qlib_path,p)))
++					sources.append(p)
++
+ 		# trim count to avoid random.sample exception
+ 		if count > len(sources):
+ 			count = len(sources)
++
++		# select from question list: randomly selection/order
+ 		L = random.sample(sources,count)
+ 		for source in L:
+ 			questions.append((mark,source))
++
+ 	return questions

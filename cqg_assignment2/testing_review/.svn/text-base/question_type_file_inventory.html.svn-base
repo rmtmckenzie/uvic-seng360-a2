@@ -1,0 +1,82 @@
+<html>
+<head>
+</head>
+<title>Generic File Inventory for Question Type <i>T</i></title>
+</head>
+
+<h2>Generic File Inventory for Question Type <i>T</i></h2>
+This document specifies the required files, and their locations,
+for each question type <i>T</i> in the CQG system.
+
+<h3><tt>bin/</tt></h3>
+<dl>
+<dt><i>T</i><tt>_template_verifier.py</tt><dd>
+This command-line application verifies the format of a
+template of type <i>T</i>.
+
+<dt><i>T</i><tt>_generate.py</tt><dd>
+This command-line application generates a set of questions from
+a template of type <i>T</i>.
+</dl>
+
+<h3><tt>web2py/applications/cqg/question/</tt></h3>
+<dl>
+<dt><i>T</i><tt>.py</tt><dd>
+implements class <i>T</i>,
+following the specification contained in <tt>abstract_question.py</tt>
+<dt><i>T</i><tt>_util.py</tt><dd>
+provides functions for use in <i>T</i><tt>.py</tt>,
+especially functions for evaluating answer correctness.
+</dl>
+
+<h3><tt>documents/</tt><i>T</i><tt>/</tt></h3>
+<dl>
+<dt><tt>template_format.html</tt><dd>
+specifies the syntax and semantics of the template files for
+question type <i>T</i>.
+<dt><tt>question_rules.html</tt><dd>
+completely specifies the rules underlying "correct" and "incorrect" answers.
+</dl>
+
+<h3><tt>testing_review/</tt><i>T</i><tt>/</tt></h3>
+</ol>
+<dl>
+<dt><tt>question_template_verification_plan.html</tt><dd>
+contains the template testing and review process tasks specific to
+question type <i>T</i>.
+<dt><tt>function_tests.py</tt><dd>
+contains an application which
+automatically tests the code in <i>T</i><tt>_util.py</tt>.
+<p>
+<dt><tt>templates/</tt><dd>
+contains template(s) for use in testing of question type <i>T</i>.
+<dt><tt>question_library/</tt><dd>
+contains questions(s) for use in testing of question type <i>T</i>.
+<dt><tt>quizzes/</tt><dd>
+contains one or more quizzes for use in GUI testing of question type <i>T</i>.
+
+<dt><tt>install_tests.py</tt><dd>
+contains code to generate one or more question(s) from <tt>templates/</tt>,
+copy the questions into <tt>question_library/</tt> and
+the quizzes into <tt>quizzes/</tt>
+for use in GUI testing of question type <i>T</i>.
+
+<dt><tt>uninstall_tests.py</tt><dd>
+contains code to remove the questions and quizzes installed
+by <tt>uninstall_tests.py</tt>.
+<p>
+<dt><tt>manual_gui_test_plan.txt</tt><dd>
+contains a test plan for manually GUI testing of question type <i>T</i>.
+
+<dt><tt>selenium_test_cases/</tt><dd>
+contains test cases for automated GUI testing of question type <i>T</i>.
+<dt><tt>selenium_test_suite.html</tt><dd>
+contains selenium code for invoking the test cases in
+<tt>selenium_test_cases/</tt>.
+<p>
+<dt><tt>log/</tt><dd>
+Reserved for future use.
+
+</dl>
+
+</html>

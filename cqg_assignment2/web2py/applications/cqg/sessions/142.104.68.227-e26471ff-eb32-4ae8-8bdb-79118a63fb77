@@ -1,0 +1,9 @@
+(dp1
+S'login'
+p2
+S''
+sS'quiz'
+p3
+S"(iquiz\nquiz\np1\n(dp2\nS'timer'\np3\nI1382731688\nsS'question_lib_path'\np4\nS'../question_library/'\np5\nsS'log_name'\np6\nS''\nsS'answer_list'\np7\n(lp8\n(dp9\nS'answer'\np10\nNsa(dp11\ng10\nNsasS'standalone'\np12\nI00\nsS'question_list'\np13\n(lp14\n(iquestion.multiple_choice\nmultiple_choice\np15\n(dp16\nS'correct_answer'\np17\nI1\nsS'question_library_path'\np18\ng5\nsS'question_path'\np19\nS'test_multiple_choice/test_0'\np20\nsS'question_text'\np21\nS'Question text'\np22\nsS'answers'\np23\n(lp24\nS'incorrect'\np25\naS'correct'\np26\nag25\nasba(iquestion.multiple_choice\nmultiple_choice\np27\n(dp28\ng17\n(lp29\nI2\naI3\nasg18\ng5\nsg19\nS'test_multiple_choice/test_1'\np30\nsg21\nS'<tt>Question text</tt>which wraps question question question question questionquestion question question question question question'\np31\nsg23\n(lp32\nS'Answer text which wraps answer answer answeranswer answer answer answer answer answer answer'\np33\naS'answer 1'\np34\naS'answer 2'\np35\naS'answer 3'\np36\nasbasS'mark_list'\np37\n(lp38\nI1\naI1\nasS'logged'\np39\nI00\nsS'practice_mode'\np40\nI01\nsS'log_dir'\np41\nS''\nsS'message_list'\np42\n(lp43\nS''\naS''\nasb."
+p4
+s.

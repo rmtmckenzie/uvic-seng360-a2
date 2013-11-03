@@ -1,0 +1,227 @@
+#!/usr/bin/python
+
+import sys
+import os
+import re
+import code_activator_util
+import file_util
+import verify_util
+
+sys.path.append('../web2py/applications/cqg')
+
+condition_list = [
+	['variables_defined',
+		"'product_family', 'question_type', 'display', 'argvs', " + 
+		 "'stdin', 'stdout', are declared"],
+	['hotspot_declarations_defined',
+		"'hotspot_declarations' is declared and of type dict"],
+	['hotspot_declarations_keys',
+		"all keys in 'hotspot_declarations' must be strings"],
+	['hotspot_declarations_value',
+		"all values in 'hotspot_declarations' must be int,float,string"\
+		 " or tuple"],
+	['hotspot_declarations_tuple',
+		"tuple in 'hotspot_declarations' must be "\
+		 "('string',[list of string]) or "\
+		 "('int',[list of int]) or ('float',[list of float])"],
+	['product_family_value',
+		"'product_family' must be code_activator"],
+	['question_type_value',
+		"'question_type' must be input_output,find_the_failure or "+\
+		 "bullseye"],
+	['execute_source',
+		"execute.{c,py} or CA_JAVA.java must be present"],
+	['run_script_format',
+		"run.sh must be an executable shell script"],
+	['execute_binary_format',
+		"execute must be an executable shell script"],
+	['execute_py_format',
+		"execute.py must be a python program"],
+	['execute_java_format',
+		"class named in run.sh must have "+\
+                 "corresponding executable java (.class) file"],
+	['ca_java_format',
+		"A_JAVA.class: must be an executable java class"],
+	['faulty_script_format',
+		"faulty.sh must be an executable shell script"],
+	['faulty_binary_format',
+		"faulty must be an executable shell script"],
+	['faulty_py_format',
+		"faulty.py must be a python program"],
+	['faulty_java_format',
+		"class named in faulty.sh must have "+\
+                  "corresponding executable java (.class) file"],
+	['warning',
+ 		 "unused hotspot"],
+]
+
+def check_script(filename):
+	result = os.popen("file "+filename).readlines()[0]
+	if not re.search("Bourne-Again shell script.*text executable",result)\
+		or not os.access(filename,os.X_OK):
+		return False
+	return True
+
+def check_exe(filename):
+	result = os.popen("file "+filename).readlines()[0]
+	if not re.search("ELF.*executable",result)\
+		or not os.access(filename,os.X_OK):
+		return False
+	return True
+
+def check_py(filename):
+	result = os.popen("file "+filename).readlines()[0]
+	if not re.search("text$",result):
+		return False
+	return True
+
+def check_java(filename):
+	result = os.popen("file "+filename).readlines()[0]
+	if not re.search("compiled.*Java.*class",result):
+		return False
+	return True
+
+def check_java_call(invoking_script):
+	for line in open(invoking_script,'r').readlines():
+		line = line.strip()
+		if re.search("java",line):
+			java_call = line.split("=")[1].strip('"').split(' ')
+			break
+	class_file = java_call[0]+".class"
+	return check_java(class_file)
+
+def verify_conditions(question_directory,config,condition_list):
+	conditions_dictionary = {}
+        for condition in condition_list:
+                conditions_dictionary[condition[0]] = condition[1]
+
+	for v in ['product_family','question_type','display','argvs','stdin',
+	 'stdout']:
+	 	if v not in dir(config):
+			return conditions_dictionary['variables_defined']
+
+	if 'hotspot_declarations' not in dir(config) \
+	 or type(config.hotspot_declarations) is not dict:
+		return conditions_dictionary['hotspot_declarations_defined']
+		
+	for k in config.hotspot_declarations.keys():
+		if type(k) is not str:
+			return \
+			 conditions_dictionary['hotspot_declarations_keys']
+
+	for v in config.hotspot_declarations.values():
+		if type(v) is str and v in ['int','float','string']:
+			pass
+		elif type(v) is tuple:
+			pass
+		else:
+			return \
+			 conditions_dictionary['hotspot_declarations_value']
+		
+	for v in config.hotspot_declarations.values():
+		if type(v) is tuple:
+			if len(v) != 2:
+				return conditions_dictionary[
+				 'hotspot_declarations_tuple']
+			if type(v[1]) is not list or len(v[1]) < 2:
+				return conditions_dictionary[
+				 'hotspot_declarations_tuple']
+			if v[0] == 'int':
+				for i in v[1]:
+					if not code_activator_util.check_int(
+					 str(i)):
+						return conditions_dictionary[
+						 'hotspot_declarations_tuple']
+			elif v[0] == 'float':
+				for i in v[1]:
+					if not code_activator_util.check_float(
+					 str(i)):
+						return conditions_dictionary[
+                                                 'hotspot_declarations_tuple']
+						
+			elif v[0] == 'string':
+				for i in v[1]:
+					if code_activator_util.check_string(
+					 str(i)):
+						return conditions_dictionary[
+                                                 'hotspot_declarations_tuple']
+			else:
+				return conditions_dictionary[
+				 'hotspot_declarations_tuple']
+
+	if config.product_family != 'code_activator':
+		return conditions_dictionary['product_family_value']
+		
+	if config.question_type not in ['input_output','find_the_failure',
+	 'bullseye']:
+		return conditions_dictionary['question_type_value']
+
+	os.chdir(question_directory)
+	if os.path.exists("execute.c"):
+		config.language = "C"
+	elif os.path.exists("execute.py"):
+		config.language = "python"
+	elif os.path.exists("CA_JAVA.java"):
+		config.language = "java"
+	else:
+		return conditions_dictionary['execute_source']
+
+	if not check_script("run.sh"):
+		return conditions_dictionary['run_script_format']
+
+	if config.language == "C":
+		if not check_exe("execute"):
+			return conditions_dictionary['execute_binary_format']
+		if config.question_type == "find_the_failure":
+			if not check_exe("faulty"):
+				return \
+				 conditions_dictionary['faulty_binary_format']
+	elif config.language == "python":
+		if not check_py("execute.py"):
+			return conditions_dictionary['execute_py_format']
+		if config.question_type == "find_the_failure":
+			if not check_py("faulty.py"):
+				return conditions_dictionary['faulty_py_format']
+	elif config.language == "java":
+		if not check_java_call("run.sh"):
+			return conditions_dictionary['execute_java_format']
+                if not check_java("CA_JAVA.class"):
+			return conditions_dictionary['ca_java_format']
+		if config.question_type == "find_the_failure":
+			try:
+				os.chdir("faulty/")
+				if not check_java_call("../faulty.sh"):
+					return conditions_dictionary\
+					 ['faulty_java_format']
+				if not check_java("CA_JAVA.class"):
+					return conditions_dictionary\
+					 ['ca_java_format']
+			except:
+				return conditions_dictionary['ca_java_format']
+			os.chdir("../")
+
+	if config.question_type == "find_the_failure":
+		if not check_script("faulty.sh"):
+			return conditions_dictionary['faulty_script_format']
+
+	if config.question_type != "bullseye":
+		all_templates = config.display+config.argvs+config.stdin+\
+		 config.stdout
+		for k in config.hotspot_declarations.keys():
+			escaped = k.replace('$','\$')
+			if not re.search(escaped,all_templates):
+				print conditions_dictionary['warning']+\
+				 ':\n\t'+k
+	return None
+
+# handle invocation from command line
+if __name__ == '__main__':
+        n = verify_util.question_verifier_main(sys.argv,
+         'Question Type echo: Question Verification Conditions',
+         condition_list,verify_conditions)
+
+        if n == verify_util.COMMAND_LINE_SYNTAX_FAILURE:
+                print 'Usage: echo_question_verifier.py [question_directory]'
+
+        sys.exit(n)
+

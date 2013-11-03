@@ -1,0 +1,50 @@
+Invocation
+
+quiz_log_to_html.py <xml_file> <question_library> <output_directory>
+
+xml_file: filename of the log to be processed
+question_library: path to question library
+output_directory: directory where html output subdirectory will be created
+
+Input and Preconditions
+
+quiz_log_to_html.py takes a CQG log file. The log file must be syntactically correct
+(see documents/quiz_logging/log_file_format.txt).
+
+The contents of each <path> element must be the path, relative to
+question_library, to a valid question directory.
+
+All keys in that question's get_input_element_ids() must be defined in <answer>.
+
+Output
+
+quiz_log_to_html.py produces a directory of HTML files.
+
+For a log file named 'student_username.xml', the directory created is named
+'student_username/'. The HTML files generated in this directory are:
+	question_i.html - display of the question which had index i in the quiz
+	index.html - an index listing and linking to all question_i.html files
+
+question_i.html will contain the question as the quiz-taker saw it, with the
+following differences:
+- The row of quiz buttons (previous, submit, next) is omitted
+- The "Message:" cell shows "Correct" or "Incorrect"
+- The info cell shows the question number and the number of marks awarded for
+  that question
+
+Operation
+
+1. The log file is read into memory.
+
+2. The html output directory is created.
+
+3. Each <question> block in the log is added to a dictionary, using the <index>
+value as the key. This ensures that for questions submitted multiple times:
+- Only one submission will be output as a question_i.html file
+- The last submission will be the one output
+
+4. For each question block in the dictionary from 3., an HTML representation is
+generated into a question_i.html file in the html output directory.
+
+5. An index document, containing a list of links to each of the question_i.html
+files, is created as index.html in the html output directory.

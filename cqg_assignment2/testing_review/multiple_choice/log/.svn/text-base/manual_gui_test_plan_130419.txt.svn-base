@@ -1,0 +1,44 @@
+Multiple Choice Manual Test Plan
+
+Open URL
+	http://localhost:7777/cqg/quiz?spec=test_multiple_choice
+
+P	a multiple choice question appears
+
+P	display table has 1 column
+
+P	all cells have black border
+
+-----  question cell
+
+P	Approximately 10% of the cell width separates "Question text" from
+	 the left black border
+
+P	Below "Question text" are three radio buttons, labelled "incorrect",
+	 "correct", "incorrect"
+
+P	The radio buttons are indented slightly relative to "Question text"
+
+P	The radio buttons are all the same distance from the left black border
+
+----- answer checking
+
+select the first "incorrect", then press Check answer
+
+P	"Message: Incorrect" displayed in red
+
+select "correct", then press Check answer
+
+P	"Message: Correct" displayed in green
+
+----- layout edge cases
+
+press Next
+
+P	Long blocks of text wrap flush-left and have left and right margins
+	 approximately 10% of the cell width
+
+P	There is a line break after the word "break:"
+
+P	"teletype", "bold", "italic" display as described, and "correct"
+	 appears in angle brackets

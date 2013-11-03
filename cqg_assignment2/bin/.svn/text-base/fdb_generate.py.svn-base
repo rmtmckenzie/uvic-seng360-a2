@@ -1,0 +1,55 @@
+#!/usr/bin/python
+
+import sys
+import os
+
+# check the number of command line arguments
+if len(sys.argv) != 3:
+	print 'Usage:',sys.argv[0],'<template> <codelib>'
+	sys.exit()
+
+# exec the contents of the template
+exec(open(sys.argv[1],'r').read())
+
+# every question in must have file types.py
+# types.py must contain at least variables product_family and question_type
+# in the template below:
+#	product_family: module captcha in web2py/applications/cgq/question/
+#	question_type: class captcha in web2py/applications/cgq/question/captcha.py
+template = '''\
+product_family = 'fdb_question'
+question_type = 'fdb'
+values = {
+$traffic_table
+$fdb
+$f_result
+}
+'''
+
+# generate one question for each tuple
+for q_grp in question_tuples:
+	# question group prefix
+	q_grp_prefix = q_grp[0] 
+
+	questions = q_grp[1:]
+	for q in range(len(questions)):
+		# build path.
+		path = os.path.join(sys.argv[2],q_grp_prefix+'_'+str(q))
+		print 'Generating',path
+
+		# create question dir if not exists
+		if not os.path.exists(path):
+			os.mkdir(path)
+
+		# create the types.py file
+		types = os.path.join(path,'types.py')
+		f = open(types,"w")
+		result = template
+		
+		# replace $traffic_table, $fdb, and $f_result
+		for key in questions[q]:
+			target = '$'+key
+			result = result.replace(target,"\t'"+key+"':"+str(questions[q][key])+',')
+
+		f.write(result)
+		f.close()

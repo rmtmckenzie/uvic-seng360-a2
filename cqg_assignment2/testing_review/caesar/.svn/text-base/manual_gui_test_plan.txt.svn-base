@@ -1,0 +1,36 @@
+Caesar Manual Test Plan
+
+Open URL
+	http://localhost:7777/cqg/quiz?spec=test_caesar
+
+PF	a caesar question appears
+
+PF	display table has 1 column
+
+PF	all cells have black border
+
+-----  question cell
+
+PF	there is a one-line instruction above a table displaying plain
+	 and cipher text
+
+PF	the table and instruction are centered horizontally and vertically
+
+PF	the plain and cipher text table contains four columns, which contain:
+	 the label 'plain text' above the label 'cipher text'
+	 A , A , A
+	 textbox, textbox, B
+
+PF	the interior edges of the plain and cipher text table have a 1px
+	 black border and the table has no surrounding border
+
+----- answer checking
+
+press Check answer
+
+PF	"Incorrect" displayed in red
+
+enter 'B' and 'B' in the text boxes, then press Check answer
+
+PF	"Correct" displayed in green
+

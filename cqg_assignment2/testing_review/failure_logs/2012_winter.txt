@@ -1,0 +1,67 @@
+DATE: 2012-09-14
+TESTER: Felix
+FAILURE DESCRIPTION (specify CUT, inputs, actual output, failure argument):
+CUT:
+	code activator quiz controller
+inputs:
+	quiz containing nonexistent question in RE syntax, e.g.
+	---
+question_list = [
+#	(mark, 	count, [directories])
+	(1,	7, 'nonexistent'),
+]
+practice_mode = True
+standalone = False
+logged = False
+log_dir = ''
+	---
+	
+actual output:
+	web2py internal error page
+failure argument:
+	should be "no such quiz" or similar, with a logged message to
+	cqg_errors.log
+FAULT DESCRIPTION:
+	? guessing fault in handling of RE syntax question specifiers, since non-RE
+	syntax OK (e.g. quiz above with s/'nonexistent'/['nonexistent']/ correctly
+	prints "no such quiz"
+DEVELOPER: Felix
+DATE: not yet
+FIX: not fixed yet
+
+DATE: 2012-09-14
+TESTER: Felix
+FAILURE DESCRIPTION (specify CUT, inputs, actual output, failure argument):
+CUT:
+	code activator quiz controller?
+	hamming question instantiator?
+inputs:
+	the quiz below
+---
+question_list = [
+#	(mark, 	count, [directories])
+	(1, 7, ['hamming/fill_checkbits_0']), # <-- exists
+	(1, 7, ['hamming/fill_checkbits_1']), # <-- exists
+
+	(1, 7, ['hamming/XXXXXX']), # <-- doesn't exist; displayed as repeat of previous line
+	#   ^---- note: this count is also bogus; might have something to do with it
+]
+practice_mode = True
+standalone = False
+logged = False
+log_dir = ''
+---
+
+actual output:
+	quiz presented with count as if nonexistent questions were present
+	nonexistent questions are presented as repeats of the last existent question
+failure argument:
+	nonexistent questions should just not be displayed; if there are 5
+	existent questions and 2 nonexistent ones, the quiz should have 5
+	questions
+FAULT DESCRIPTION:
+	? investigate
+DEVELOPER: Felix
+DATE: not yet
+FIX: not fixed yet
+=================================== - EOF - ===================================

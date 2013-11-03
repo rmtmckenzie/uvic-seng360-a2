@@ -1,0 +1,27 @@
+<h2>Question template format: multiple_choice</h2>
+
+This document explains the syntax and semantics of the multiple_choice
+question template.
+<p>
+The required variables and the restrictions on their values
+are specified by the Template Verification Conditions.
+<p>
+0-relative index indicates correct answer
+Questions and answers may contain limited html.
+<p>
+The variable <tt>group_list</tt> must contain a list of groups, where
+each group has the form:
+<p>
+[<i>group_name</i>, <i>question_vector_0</i>, <i>question_vector_1</i>, ...]
+<p>
+and each question vector has the form:
+<pre>
+[<i>question_text</i>, <i>answers</i>,<i>correct_answer</i>]
+</pre>
+One question is generated for each question vector.
+The question generated from <i>question_vector_i</i> is stored in a directory
+with name constructed by appending <i>i</i> to <i>group_name</i>.
+<p>
+<i>answers</i> is a list of possible answers, and <i>correct_answer</i> is the
+index of the correct answer (if only one answer is correct) or a list of indeces
+of correct answers (if multiple are correct).

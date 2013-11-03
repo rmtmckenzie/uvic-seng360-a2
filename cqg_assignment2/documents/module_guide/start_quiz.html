@@ -1,0 +1,47 @@
+<HTML>
+<HEAD><TITLE>Start quiz message exchange diagram</TITLE></HEAD>
+<BODY>
+
+<H1>Start quiz message exchange diagram</H1>
+<IMG SRC="start_quiz.png"/>
+<DL>
+<DT>HTTP request<DD>
+<CODE>
+http://cdoku.seng.uvic.ca:8080/cqg/quiz?spec=min_io_alone
+</CODE>
+<BR>
+Because the URL does <i>not</i> reference the
+<code>static/</code> directory, a dynamic HTML page is requested.
+<BR>
+The URL parameter, <code>spec=min_io_alone</code>, is available in the
+<code>vars</code> property of the Python global variable
+<code>request</code>.
+Specifically, <code>request.vars['spec']</code> has value
+'<code>min_io_alone</code>'.
+
+<dt><code>index()</code><dd>
+invoke function <code>index()</code> in 
+<code>controllers/quiz.py</code>
+
+<dt>quiz constructor<dd>
+invoke the constructor of class <code>quiz</code> in 
+<code>quiz.py</code>
+
+<dt>question constructor<dd>
+invoke the constructor of class <code>question</code> in  
+<code>question/XXX.py</code>, where XXX is the question type.
+
+<dt>question HTML code<dd>
+question presentation in HTML is returned by function
+<code>get_html()</code> in the question object.
+
+<dt>page HTML code<dd>
+HTML code of the page is return by function <code>get_html()</code> in the
+quiz object.
+
+<dt>HTTP response<dd>
+web2py server sends the generated HTML as an HTTP response to the client
+</DL>
+
+</BODY>
+<HTML>

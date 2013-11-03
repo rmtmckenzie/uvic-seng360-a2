@@ -1,0 +1,162 @@
+import os
+import file_util
+import html_util
+import ip_address_util
+
+def format_for_table(ip):
+	'''
+	purpose
+		return a list of strings suitable for display in
+		html_util.get_table(), e.g. 127.0.0.1 would yield
+		['127','.','0','.','0','.','1']
+	precondition
+		ip is an ip_address_util.ip_address object
+	'''
+	decimal_tuple = ip.get_decimal_tuple()
+	decimal_tuple = [str(i) for i in decimal_tuple]
+	# insert then remove '|' to split into 7 columns
+	return "|.|".join(decimal_tuple).split("|")
+
+class ip_address():
+	'''
+	purpose
+		superclass containing methods common to all question subtypes.
+		not instantiated directly.
+	'''
+	def get_css(self,answer):
+		return style
+
+	def get_input_element_ids(self):
+		return ['answer']
+
+	def get_question_library_path(self):
+		return self.question_library_path
+	
+	def get_question_path(self):
+		return self.question_path
+	
+class ip_address_class(ip_address):
+	'''
+	purpose
+		implements the "Which network class is this address?" subtype
+	'''
+	def __init__(self,question_library_path,question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(os.path.join(
+		 question_library_path,question_path,'cqg_config.py'))
+
+		self.address = ip_address_util.ip_address(config.addresses[0])
+
+	def get_html(self,answer):
+		table = html_util.get_table([
+		 ["<b>Address:</b>"] + format_for_table(self.address),
+		],0,0,0)
+		html = html_base.replace("$IP",table)
+
+		html = html.replace("$Q",
+		 "What network class is this address? " + html_util.get_select(
+		  'answer',['','A','B','C'],answer['answer']))
+
+		return html
+	
+	def check_answer(self,answer):
+		return answer['answer'] == self.address.get_class()
+
+class same_network(ip_address):
+	'''
+	purpose
+		implements the "are these two addresses on the same network?"
+		subtype, using address classes
+	'''
+	def __init__(self,question_library_path,question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(os.path.join(
+		 question_library_path,question_path,'cqg_config.py'))
+
+		self.addressX = ip_address_util.ip_address(config.addresses[0])
+		self.addressY = ip_address_util.ip_address(config.addresses[1])
+
+	def get_html(self,answer):
+		table = html_util.get_table([
+		 ["<b>Address X:</b>"] + format_for_table(self.addressX),
+		 ["<b>Address Y:</b>"] + format_for_table(self.addressY),
+		],0,0,0)
+		html = html_base.replace("$IP",table)
+
+		html = html.replace("$Q",
+		 "Are X and Y on the same network? " + html_util.get_select(
+		  'answer',['','no','yes'],answer['answer']))
+
+		return html
+
+	def check_answer(self,answer):
+		class_mask = self.addressX.get_class_mask()
+		if (self.addressX.apply_mask(class_mask).bits ==
+		 self.addressY.apply_mask(class_mask).bits):
+			correct_answer = 'yes'
+		else:
+			correct_answer = 'no'
+
+		return correct_answer == answer['answer']
+
+class same_network_mask(ip_address):
+	'''
+	purpose
+		implements "are these two addresses on the same network?"
+		subtype, using a subnet mask
+	'''
+	def __init__(self,question_library_path,question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(os.path.join(
+		 question_library_path,question_path,'cqg_config.py'))
+
+		self.addressX = ip_address_util.ip_address(config.addresses[0])
+		self.addressY = ip_address_util.ip_address(config.addresses[1])
+		self.netmask = ip_address_util.ip_address(config.addresses[2])
+		
+	def get_html(self,answer):
+		table = html_util.get_table([
+		 ["<b>Address X:</b>"] + format_for_table(self.addressX),
+		 ["<b>Address Y:</b>"] + format_for_table(self.addressY),
+		 ["<b>Mask:</b>"] + format_for_table(self.netmask),
+		],0,0,0)
+		html = html_base.replace("$IP",table)
+
+		html = html.replace("$Q",
+		 "Are X and Y on the same network? " + html_util.get_select(
+		  'answer',['','no','yes'],answer['answer']))
+
+		return html
+
+	def check_answer(self,answer):
+		if (self.addressX.apply_mask(self.netmask).bits ==
+		 self.addressY.apply_mask(self.netmask).bits):
+			correct_answer = 'yes'
+		else:
+			correct_answer = 'no'
+
+		return correct_answer == answer['answer']
+
+style = '''
+	#question_cell table { margin:auto; border:0px; }
+	#question_cell td { text-align:center; }
+	#question_cell table table td:first-child { text-align:right; }
+'''
+
+html_base = '''\
+<table cellspacing="0" width="100%" height="100%">
+<tr>
+<td style="height:30px" align="center" bgcolor="purple">
+<b><font size="5" color="white">IP Address</font></b>
+</td>
+</tr>
+<tr>
+<td>$IP
+<p>$Q</p>
+</td>
+</tr>
+</table>
+'''

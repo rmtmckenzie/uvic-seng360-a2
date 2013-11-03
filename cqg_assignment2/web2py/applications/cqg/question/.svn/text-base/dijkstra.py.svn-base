@@ -1,0 +1,189 @@
+import os
+import file_util
+import html_util
+import dijkstra_util
+
+class dijkstra:
+	def __init__(self,question_library_path,question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(
+		 os.path.join(question_library_path,question_path,
+		 'cqg_config.py'))
+
+		self.graph = dijkstra_util.w_graph(config.graph)
+		self.source = config.source
+		self.dest = config.dest
+		self.iterations = config.iterations
+		self.table_hotspots = config.table_hotspots
+	
+	def get_question_library_path(self):
+		return self.question_library_path
+	
+	def get_question_path(self):
+		return self.question_path
+
+	def get_input_element_ids(self):
+		hotspots = []
+		for hotspot in self.table_hotspots:
+			hotspots.append("%s_%d" % (hotspot[0],hotspot[1]))
+		return hotspots
+
+	def get_css(self,answer):
+		return style
+
+	def get_html(self,answer):
+		html = html_base.replace('$S',self.source)
+		html = html.replace('$D',self.dest)
+		html = html.replace('$N',str(self.iterations))
+
+		graph_text = draw_graph(self.graph)
+		graph_text = graph_text.replace(
+		 self.source,'<b><u>%s</u></b>' % self.source)
+		graph_text = graph_text.replace(
+		 self.dest,'<b>%s</b>'%self.dest)
+
+		dijkstra_result = self.graph.dijkstra(self.source,self.dest)
+		
+		# build result table
+		table = [['vertex'] + sorted(dijkstra_result[0].keys())]
+		i = 0
+		for row in dijkstra_result:
+			table.append(['<b>iteration&nbsp;%d:</b>'%i] +
+			 [row[k] for k in sorted(row.keys())])
+			i += 1
+			if i > (self.iterations - 1):
+				break
+		
+		# punch hotspots into table
+		for hotspot in self.table_hotspots:
+			row = 1+hotspot[1] # + 1 to skip header row
+			column = table[0].index(hotspot[0]) # find node name
+			hotspot_name = "%s_%d" % (hotspot[0],hotspot[1])
+
+			if answer[hotspot_name] is None:
+				value = ''
+			else:
+				value = answer[hotspot_name]
+
+			table[row][column] = html_util.get_text(
+			 hotspot_name,value,size=2)
+
+		# boldface the header row
+		table[0] = ['<b>%s</b>'%i for i in table[0]]
+		
+		html = html.replace('$T',html_util.get_table(table,1,40,0))
+		html = html.replace('$Q',graph_text)
+
+		return html
+	
+	def check_answer(self,answer):
+		correct_run = self.graph.dijkstra(self.source,self.dest)
+
+		for hotspot in self.table_hotspots:
+			# get value from submission
+			hotspot_name = "%s_%d" % (hotspot[0],hotspot[1])
+			if answer[hotspot_name] is None:
+				return False # blanks always incorrect
+			value = answer[hotspot_name]
+
+			try:
+				# float instead of int, for 'inf' values
+				value = float(value)
+			except:
+				return False # non-numbers always incorrect
+			
+			# CAUTION: this will break if we ever allow allow
+			# authors to supply non-integer edge weights
+			if correct_run[hotspot[1]][hotspot[0]] != value:
+				return False
+
+		return True
+
+style = '''
+	#question_cell table { margin:auto; border:0px; }
+	#question_cell td { text-align:center; }
+	#question_cell td#question_body {
+		text-align:left; vertical-align:top; padding:10px; }
+	#question_cell pre { margin-left:33%; font-size:12pt; }
+'''
+
+html_base = '''\
+<table cellspacing="0" width="100%" height="100%">
+<tr>
+<td style="height:30px" align="center" bgcolor="AntiqueWhite">
+<b><font size="5">Dijkstra</font></b>
+</td>
+</tr>
+<tr>
+<td id='question_body'>
+<p>Dijkstra's algorithm is run on the graph below, with source node 
+<b><u>$S</u></b> and destination node <b>$D</b>.</p>
+<p>Complete the table showing the intermediate results from the first $N
+iterations by filling in the missing values. Indicate "no tentative value yet"
+with the string 'inf'.</p>
+<pre>$Q</pre>
+$T
+</td>
+</tr>
+</table>
+'''
+
+graph_template = '''\
+
+ A--AB--B--BC--C--CD--D
+AE-    BF-    CG-    DH-
+AE     BF     CG     DH
+AE-    BF-    CG-    DH-
+ E--EF--F--FG--G--GH--H
+EI-    FJ-    GK-    HL-
+EI     FJ     GK     HL
+EI-    FJ-    GK-    HL-
+ I--IJ--J--JK--K--KL--L
+
+'''
+
+def draw_graph(graph):
+	'''
+	purpose
+		returns an ascii art representation of graph
+	precondition
+		graph is a w_graph instance
+	'''
+	horizontal_edges = ['AB', 'BC', 'CD', 'EF', 'FG', 'GH', 'IJ', 'JK', 'KL']
+	vertical_edges = ['AE', 'BF', 'CG', 'DH', 'EI', 'FJ', 'GK', 'HL']
+
+	graph_edges = dijkstra_util.get_edges(graph.graph)
+	graph_nodes = dijkstra_util.get_nodes(graph.graph)
+
+	s = graph_template
+	for edge in horizontal_edges:
+		if edge in graph_edges:
+			# replace marker with edge weight (padded with '-')
+			weight = str(graph.graph[edge[0]][edge[1]])
+			if len(weight) == 1:
+				weight = '-'+weight
+			s = s.replace('--'+edge+'--',
+			 '--'+weight+'--')
+		else:
+			# replace edge with empty space
+			s = s.replace('--'+edge+'--','      ')
+
+	for edge in vertical_edges:
+		if edge in graph_edges:
+			# replace vertical line markers with lines
+			s = s.replace(edge+'-',' | ')
+			# replace remaining (middle) marker with edge weight
+			s = s.replace(edge,'%2d'%graph.graph[edge[0]][edge[1]])
+		else:
+			# replace edge markers with empty space
+			s = s.replace(edge+'-','   ')
+			s = s.replace(edge,'  ')
+
+	# only remaining letters will be nodes;
+	# replace NONexistent ones with empty space
+	for node in dijkstra_util.ALLOWED_NODES:
+		if node not in graph_nodes:
+			s = s.replace(node,' ')
+
+	return s

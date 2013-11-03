@@ -1,0 +1,42 @@
+schedule
+	warmup
+	arrays/strings
+	functions
+		local vs global
+			incl local hides global
+warmup
+	types_operators_expressions
+		no explicit templates
+	[5] control_flow
+		if-else: min from tutorial
+		for: arithmetic progression
+		while: convert geometric_progression.py to while
+	[1] functions
+		power_function_io.py
+	[4] pointers_arrays
+		linear search: eop/ch3
+		min, max, mean
+	[4] strings
+		strlen_io.py
+		strcpy_io.py
+	[0] structures
+		no templates
+	[1] input_output
+		printf: %s %d %f; no template
+		scanf: min w/ scanf not inline
+types_operators_expressions
+	use eop
+control_flow
+functions
+
+[12] pointers_arrays
+	array slices: lin search w/slices
+	array manipulations: find, insert_at, remove_at
+		flawed insert_at: use L-R loop
+	binary search
+	inc/dec and indexes
+[8] strings
+	pull heavily: raw, w/code, strcmp w/ASCII
+
+structures
+input_output

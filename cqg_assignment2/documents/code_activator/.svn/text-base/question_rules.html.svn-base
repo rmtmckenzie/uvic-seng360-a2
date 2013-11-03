@@ -1,0 +1,71 @@
+<h2>Question type: code activator</h2>
+
+In Code Activator, the display contains four cells:
+<ol>
+<li>
+<i>code cell</i>: a program in C, C++, Java, or Python,
+<li>
+<i>argv cell</i>: text available as command line arguments,
+<li>
+<i>stdin cell</i>: text available as standard input, and
+<li>
+<i>stdout cell</i>: text written as standard input.
+</ol>
+Each of the four cells may contain a mixture of fixed text and hotspots.
+<p>
+There are three kinds of Code Activator questions,
+each with slightly different rules:
+<ol>
+<li>
+<i>Input-output</i>:
+When you press the <i>check answer</i> button, the code is executed.
+The actual output of the execution is saved.
+Your answer is correct if the actual output is the same as
+the contents of the <i>stdout</i> cell.
+<li>
+<i>Bullseye</i>:
+The <i>stdout</i> cell is omitted in <i>Bullseye</i> questions.
+The <i>code</i> cell contains one or more
+<font color="blue"><b>highlighted</b></font> lines.
+When you press the <i>check answer</i> button, the code is executed.
+Your answer is correct if each of the highlighted lines
+was executed at least once.
+<li>
+<i>Find-the-failure</i>:
+The <i>stdout</i> cell is omitted in <i>Find-the-failure</i> questions.
+The <i>code</i> cell contains a specification and an implementation
+of a function, and an invocation of that function.
+When you press the <i>check answer</i> button, the code is executed.
+Your answer is correct if the return value of the function
+is <b>incorrect</b>, with respect to the specification.
+</ol>
+
+
+
+
+<p>
+Each hotspot in the display cells has an associated type:
+<ul>
+<li>
+<i>integer</i>:
+from 1 to 5 decimal digits preceded by an optional sign.
+<li>
+<i>floating point</i>:
+from 1 to 5 decimal digits followed by a decimal point followed by
+from 1 to 5 decimal digits,
+all preceded by an optional sign.
+<li>
+<i>string</i>:
+zero or more alphabetic, numeric, space or underscore characters.
+</ul>
+If the value entered is not of the correct type,
+then the code is not executed and the answer is considered incorrect.
+<p>
+On the display, the hotspot type is shown when the mouse is held
+over the hotspot.
+<p>
+In <i>Input-output</i> questions,
+the contents of the <i>stdout</i> cell and the output
+of the executed code are compared.
+Before this comparison is performed,
+all newlines are removed from the end of both outputs.

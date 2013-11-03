@@ -1,0 +1,34 @@
+def generate_code_word(message,parity):
+	'''
+	Purpose:
+		return a code word computed from message using parity
+	Preconditions:
+		message is a string containing 7 bits
+		parity in [0,1]
+	Examples
+		generate_code_word('0100000',0) returns [0,1,0,...,1]
+		generate_code_word('0101000',0) returns [010...0]
+		generate_code_word('0100000',1) returns [010,...,0]
+		generate_code_word('0101000',1) returns [0,1,0,...,1]
+	'''
+	for b in message:
+		parity ^= int(b)
+	return message + str(parity)
+		
+
+def check_code_word(code_word,parity):
+	'''
+	Purpose
+		return True iff code_word is correct using parity
+	Precondition
+		code_word is a string containing 8 bits
+	Examples
+		check_code_word('01000001',0) returns True
+		check_code_word('01000000',0) returns False
+		check_code_word('01000000',1) returns True
+		check_code_word('01000001',1) returns False
+	'''
+	p = int(code_word[0])
+	for b in code_word[1:]:
+		p ^= int(b)
+	return p == parity

@@ -1,0 +1,231 @@
+#!/usr/bin/python
+
+import sys
+import os
+import string
+sys.path.append('../web2py/applications/cqg/')
+import code_activator_util
+import file_util
+import verify_util
+
+
+# list of verification identifier/condition pairs
+condition_list = [
+	['question_type_defined',
+		"'question_type' is declared and of type string"],
+	['question_type_value',
+		"'question_type' is 'input_output','bullseye' or " +\
+		 "'find_the_failure'"],
+	['source_language_defined',
+		"'source_language' is declared and of type string"],
+	['source_language_value',
+		"'source_language' is 'C','python' or 'java'"],
+	['public_class_name_defined',
+		"'public_class_name' is declared and of type string"],
+	['global_code_template_define',
+		"'global_code_template' is declared and of type string"],
+	['main_code_template_define',
+		"'main_code_template' is declared and of type string"],
+	['argv_template_defined',
+		"'argv_template' is declared and of type string"],
+	['stdin_template_defined',
+		"'stdin_template' is declared and of type string"],
+	['stdout_template_defined',
+		"'stdout_template' is declared and of type string"],
+	['line_prefix',
+		"each line in {main,global}_code_template must be prefixed " +\
+		 "with a combination of 'd','x' and 'X' followed by a tab"],
+	['hotspot_declarations_defined',
+		"'hotspot_declarations' is declared and of type list"],
+	['hotspot_type',
+		"each hotspot declaration is a list of strings [name,type] " +\
+		 "with unique name and appears in one of the templates"],
+	['group_list_defined',
+		"'group_list' is declared and of type list"],
+	['group_format',
+		"'group_list' is a list"],
+	['group_unique',
+                "group[0] is a unique string"],
+	['tuple_format',
+                "Each tuple t is a list of the same length as " +\
+		 "'hotspot_declarations'\n\tt[i] is of the type declared " +\
+		 "in hotspot_declarations[i]"],
+]
+
+'''
+purpose
+	return True iff v is declared in template with type t
+	return False otherwise
+precondition
+	v is a string
+	t is a python type
+	template is a module reference
+'''
+def check_variable(v,t,template):
+	if not (v in dir(template)):
+		return False
+	if not(eval('type(template.'+v+')') == t):
+		return False
+	return True
+
+'''
+purpose
+	return True if t meets condition condition_list['tuple_format']
+	return False otherwise
+precondition
+	t is a tuple
+'''
+def check_tuple(t,hotspot_declarations):
+	# t[i] must be of type list
+	if not (type(t) == list):
+		return False
+	# t[i] must the the same length as hotspot_declarations
+	if len(t) != len(hotspot_declarations):
+		return False
+	# each element in t[i] must be of the declared type
+	for j in range(len(t)):
+		if t[j] == None:
+			continue
+		p = str(t[j])
+		if hotspot_declarations[j][1] == 'int':
+			if not code_activator_util.check_int(p):
+				return False
+		elif hotspot_declarations[j][1] == 'float':
+			if not code_activator_util.check_float(p):
+				return False
+		elif hotspot_declarations[j][1] == 'string':
+			if not code_activator_util.check_string(p):
+				return False
+		elif hotspot_declarations[j][1] == 'target':
+			if type(t[j]) != bool:
+				return False
+	return True
+
+def verify_conditions(template,condition_list):
+	# convert conditions to dictionary
+        conditions_dictionary = {}
+        for condition in condition_list:
+                conditions_dictionary[condition[0]] = condition[1]
+
+	if not (check_variable('question_type',str,template)):
+		return conditions_dictionary['question_type_defined']
+	if not (template.question_type in ['input_output','bullseye',
+	 'find_the_failure']):
+		return conditions_dictionary['question_type_value']
+
+	if not (check_variable('source_language',str,template)):
+		return conditions_dictionary['source_language_defined']
+	if not (template.source_language in ['C','python','java']):
+		return conditions_dictionary['source_language_value']
+
+	if template.source_language == 'java':
+		if not (check_variable('public_class_name',str,template)):
+			return conditions_dictionary[
+			 'public_class_name_defined']
+
+	if not (check_variable('global_code_template',str,template)):
+                return conditions_dictionary['global_code_template_defined']
+	if 'ca_' in template.global_code_template:
+		return conditions_dictionary['global_code_template_type']
+
+	if not (check_variable('main_code_template',str,template)):
+                return conditions_dictionary['main_code_template_defined']
+	if 'ca_' in template.main_code_template:
+		return conditions_dictionary['main_code_template_type']
+
+	if not (check_variable('argv_template',str,template)):
+                return conditions_dictionary['argv_template_defined']
+
+	if not (check_variable('stdin_template',str,template)):
+                return conditions_dictionary['stdin_template_defined']
+
+	if template.question_type == 'input_output':
+		if not (check_variable('stdout_template',str,template)):
+			return conditions_dictionary['stdout_template_defined']
+
+	for T in [('global_code_template',template.global_code_template),
+	 ('main_code_template',template.main_code_template)]:
+		line_number = 1
+		for line in T[1].split('\n'):
+			# if the line empty
+			if line == '':
+				continue
+			prefix = ''
+			# the first whitespace character must be '/t'
+			for n in range(len(line)):
+				if line[n] in string.whitespace:
+					if not (line[n] == '\t'):
+						return conditions_dictionary[\
+						 'line_prefix']+'\n\tline: '+\
+						 line
+					break;
+			# only 'x','X','d' is allowed to be in prefix
+			prefix = line[:n]
+			for c in prefix:
+				if not c in 'dXx':
+					return conditions_dictionary[\
+					 'line_prefix']+'\n\tline: '+ line
+		line_number += 1
+
+	if not (check_variable('hotspot_declarations',list,template)):
+                return conditions_dictionary['hotspot_declarations_defined']
+
+	for p in template.hotspot_declarations:
+		# each sublist only contains 2 elements of type string
+		if not (type(p) == list and len(p) == 2):
+			return conditions_dictionary['hotspot_type']+\
+			 '\n\thotspot: '+str(p)
+		if not (type(p[0]) == str and type(p[1]) == str):
+			return conditions_dictionary['hotspot_type']+\
+			 '\n\thotspot: '+str(p)
+		# check if p present in one of the templates
+		template_string = template.global_code_template + \
+		 template.main_code_template + template.stdin_template + \
+		 template.argv_template
+		if template.question_type == 'input_output':
+			template_string += template.stdout_template
+		if not p[0] in template_string:
+			return conditions_dictionary['hotspot_type']+\
+			 '\n\thotspot: '+str(p)
+	# each hotspot must have a unique name
+	if not len(template.hotspot_declarations) == \
+	 len(set(p[0] for p in template.hotspot_declarations)):
+		return E+':\n\t'+str(p)
+
+	if not ('group_list' in dir(template)):
+                return conditions_dictionary['group_list_defined']
+        if not (type(template.group_list) == list):
+                return conditions_dictionary['group_list_type']
+	
+
+	for g in template.group_list:
+                if not (type(g) == list and len(g) >= 2):
+                        return conditions_dictionary['group_format'] + \
+			 '\n\tgroup: ' + str(g)
+                if not (type(g[0]) == str):
+                        return conditions_dictionary['group_format'] + \
+			 '\n\tgroup: ' + str(g)
+        if not (len(template.group_list) == \
+	 len(set([g[0] for g in template.group_list]))):
+		return conditions_dictionary['group_unique'] + \
+		 '\n\tgroup: ' + str(g)
+
+	for t in template.group_list:
+		for i in range(1,len(t)):
+			if not check_tuple(t[i],template.hotspot_declarations):
+				return conditions_dictionary['tuple_format']+\
+                                 '\n\ttuple: ' + str(t)
+
+	return None
+
+# handle invocation from command line
+if __name__ == '__main__':
+	n = verify_util.template_verifier_main(sys.argv,
+         'Question Type code_activator: Template Verification Conditions',
+         condition_list,verify_conditions)
+
+        if n == verify_util.COMMAND_LINE_SYNTAX_FAILURE:
+                print 'Usage: code_activator_template_verifier.py'+\
+		 '[template_file]'
+
+        sys.exit(n)

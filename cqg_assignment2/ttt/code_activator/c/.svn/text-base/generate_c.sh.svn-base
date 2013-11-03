@@ -1,0 +1,67 @@
+q=../../../question_library/code_activator/c
+
+#DONE
+echo "------------- algorithms"
+#rm -rf $q/algorithms/*
+#code_activator_generate.py algorithms/bubble_sort_count_swap.py $q/algorithms
+#code_activator_generate.py algorithms/bubble_sort_value_at.py $q/algorithms
+#code_activator_generate.py algorithms/bubble_sort_index_of.py $q/algorithms
+#code_activator_generate.py algorithms/bubble_sort_ff.py $q/algorithms
+#code_activator_generate.py algorithms/gaps_io.py $q/algorithms
+code_activator_generate.py algorithms/gcd_io.py $q/algorithms
+#code_activator_generate.py algorithms/newton_method.py $q/algorithms
+
+#NEXT
+echo "------------- arrays"
+#rm -rf $q/arrays/*
+#code_activator_generate.py arrays/add_at.py $q/arrays
+#code_activator_generate.py arrays/bin_search_io.py $q/arrays
+#code_activator_generate.py arrays/bin_search_be.py $q/arrays
+#code_activator_generate.py arrays/linear_search_slices.py $q/arrays
+
+#DONE
+#echo "------------- expressions"
+#rm -rf $q/expressions/*
+#code_activator_generate.py expressions/arithmetic_o2.py $q/expressions
+#code_activator_generate.py expressions/arithmetic_o3.py $q/expressions
+#code_activator_generate.py expressions/logical_relational_o2.py $q/expressions
+
+echo "------------- for_loop"
+#rm -rf $q/for_loop/*
+#code_activator_generate.py for_loop/arithmetic_progression.py $q/for_loop
+#code_activator_generate.py for_loop/exponentiation.py $q/for_loop
+#code_activator_generate.py for_loop/geometric_progression.py $q/for_loop
+#code_activator_generate.py for_loop/linear_search.py $q/for_loop
+#code_activator_generate.py for_loop/for_basic.py $q/for_loop
+#code_activator_generate.py for_loop/for_break_continue.py $q/for_loop
+
+#DONE
+echo "------------- functions"
+#rm -rf $q/functions/*
+#code_activator_generate.py functions/swap_cbr.py $q/functions
+#code_activator_generate.py functions/swap_cbv.py $q/functions
+#code_activator_generate.py functions/swap_no_temp.py $q/functions
+
+echo "------------- if_else"
+#rm -rf $q/if_else/*
+# gen BUG code_activator_generate.py if_else/min_three_be.py $q/if_else
+#code_activator_generate.py if_else/min_three_io.py $q/if_else
+#code_activator_generate.py if_else/three_sort_be.py $q/if_else
+#code_activator_generate.py if_else/three_sort_io.py $q/if_else
+
+echo "------------- strings"
+#rm -rf $q/strings/*
+#code_activator_generate.py strings/strlen.py $q/strings
+#code_activator_generate.py strings/strlen_base.py $q/strings
+#code_activator_generate.py strings/strlen_raw.py $q/strings
+#code_activator_generate.py strings/strcpy.py $q/strings
+#code_activator_generate.py strings/strcpy_base.py $q/strings
+#code_activator_generate.py strings/strcpy_raw.py $q/strings
+#code_activator_generate.py strings/strcmp.py $q/strings
+
+#DONE
+echo "------------- tutorial"
+#rm -rf $q/tutorial/*
+#code_activator_generate.py tutorial/min_be.py $q/tutorial
+#code_activator_generate.py tutorial/min_ff.py $q/tutorial
+#code_activator_generate.py tutorial/min_io.py $q/tutorial

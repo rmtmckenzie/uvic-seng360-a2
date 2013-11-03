@@ -1,0 +1,78 @@
+		cqg version control process
+
+svn commands:
+	svn co/update
+	svn ci
+	svn info
+	svn log
+		-r HEAD/BASE
+	svn status
+		-u shows files in repository more recent than in working copy
+	svn up
+		replace older files in working copy with most recent files
+		from repository
+	svn export
+	svn copy
+special revision identifiers:
+	HEAD: repository revision
+	BASE: working copy revision
+
+scenario: make a change
+	checkout: complete new version
+		rm -rf W
+		where:
+			W: name of working copy
+		svn co svn+ssh://graffiti/home/svn/R --username U
+		where:
+			R: 'cqg' or 'templates'
+			U: username on graffiti
+				U must be in group 'subversion'
+	checkout: incremental
+		svn update
+		(where current working dir is within working copy tree)
+	setup
+		preconditions: web2py/ (clean web2py 1.95.1 tree) must exist
+	edit/compile/test
+	checkin: modified files by name
+		svn status
+		svn ci file0 file1 ...
+			note: this command prompts for checkin comments by
+			 using the text editor of user's choice
+
+scenario: create svn repository for project X
+	set up svn
+		create svn folder
+			sudo mkdir /home/svn
+		create svn group
+			sudo groupadd subversion
+			sudo usermod -a -G subversion U
+				where U is user to be allowed access
+				note: log out from current session to activate
+				 group append
+
+	create project X
+		sudo mkdir /home/svn/X
+		sudo svnadmin create /home/svn/X
+		cd /home/svn
+		sudo chown -R root:subversion X
+		sudo chmod -R g+rws X
+
+	allow remote access to project X
+	(Note: this is not required when using svn+ssh:// syntax, above)
+		uncomment the following lines in /home/svn/X/conf/svnserve.conf
+			# [general]
+			# password-db = passwd
+		add the following line to /home/svn/X/conf/passwd
+			U = password
+				where U is the user to be allowed access
+				note: U's pasword need not be recorded in
+				 this file
+		sudo svnserve -d -r /home/svn
+
+	allow remote access without password
+		cd /home/wanghy
+		ssh-keygen -t rsa
+		ssh U@graffiti mkdir -p .ssh
+		cat .ssh/id_rsa.pub | ssh U@graffiti \
+		 'cat >> .ssh/authorized_keys'
+		where U is the user to be allowed access

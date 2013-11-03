@@ -1,0 +1,8 @@
+<dl>
+<dt>Purpose<dd>
+return true or false indicating whether year <tt>y</tt> is a leap year
+according to the Gregorian calendar
+<dt>Preconditions<dd>
+<tt>y</tt> is non-negative
+</dl>
+<tt>int is_leap_year(int y)</tt>

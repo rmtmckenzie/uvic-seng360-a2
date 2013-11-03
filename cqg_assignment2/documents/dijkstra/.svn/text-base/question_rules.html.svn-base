@@ -1,0 +1,9 @@
+<h2>Question type: dijkstra</h2>
+
+Each dijkstra question displays an undirected weighted graph. Below
+the graph is a table showing the node weights after successive
+iterations of Dijkstra's algorithm, run on the graph.
+<p>
+The table is shown with missing values. To answer the question
+correctly, you must enter the weights Dijkstra's algorithm would
+have for these nodes during the indicated iterations.

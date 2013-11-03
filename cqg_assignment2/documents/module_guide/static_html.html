@@ -1,0 +1,25 @@
+<HTML>
+<HEAD><TITLE>Static HTML message exchange diagram</TITLE></HEAD>
+<BODY>
+
+<H1>Static HTML message exchange diagram</H1>
+<IMG SRC="static_html.png"/>
+
+<DL>
+<DT>HTTP request<DD>
+<CODE>http://cdoku.seng.uvic.ca:8080/cqg/static/codeact.html</CODE>
+<br>
+The string <code>static</code> in the URL
+tells web2py to retrieve a static HTML page.
+
+<DT>read file<DD>
+read the requested file:
+<CODE>static/codeact.html</CODE>
+
+<DT>HTTP response<DD>
+the web2py server sends the contents of <CODE>codeact.html</CODE>
+as an HTTP response to the client
+</DL>
+
+</BODY>
+<HTML>

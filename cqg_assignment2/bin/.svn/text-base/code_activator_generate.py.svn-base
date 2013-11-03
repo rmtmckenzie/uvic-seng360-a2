@@ -1,0 +1,87 @@
+#!/usr/bin/python
+
+import os
+import sys
+import code_activator_template as Template
+import code_activator_util
+import file_util
+
+def generate_cqg_config(T,h_tuple):
+	'''
+	purpose
+		create cqg_config.py
+		write question_type and hotspot declarations into cqg_config.py
+	precondition
+		(standards for T and h_tuple)
+	'''
+	# create html hotspot declarations
+	html_hotspots = {}
+	for k in T.get_hotspot_names():
+		if type(h_tuple[k]) == list:
+			html_hotspots[k] = (T.get_hotspot_type(k),
+			 h_tuple[k])
+		elif h_tuple[k] is None:
+			html_hotspots[k] = T.get_hotspot_type(k)
+
+	# create display strings for 4 cells
+	display = T.get_source_language().generate_display(T,h_tuple)
+	display = code_activator_util.replace_author_hotspots(
+	 T,display,h_tuple)
+	argvs = code_activator_util.replace_author_hotspots(
+	 T,T.get_argv(),h_tuple)
+	stdin = code_activator_util.replace_author_hotspots(
+	 T,T.get_stdin(),h_tuple)
+	stdout = code_activator_util.replace_author_hotspots(
+	 T,T.get_stdout(),h_tuple)
+
+	# construct & return config_string
+	return ("product_family = 'code_activator'\n"
+	 "question_type = '"+T.get_question_type()+"'\n"
+	 "hotspot_declarations = "+str(html_hotspots)+"\n"
+	 "display = r'''"+display+"'''\n"
+	 "argvs = r'''"+argvs+"'''\n"
+	 "stdin = r'''"+stdin+"'''\n"
+	 "stdout = r'''"+stdout+"'''\n")
+
+# check the number of command line arguments
+if len(sys.argv) != 3:
+	print 'Usage: code_activator_generate.py template question_library'
+	sys.exit()
+
+# load question template as a python module
+try:
+	template = Template.Template(sys.argv[1])
+except ImportError:
+        print 'Failure while importing',sys.argv[1]
+        sys.exit(2)
+
+# BUG: do not create; check existence
+# create dir codelib if not exists
+base_dir = os.path.abspath(sys.argv[2])
+if not os.path.exists(base_dir):
+        print 'question_library directory',sys.argv[2],'does not exist'
+        sys.exit(2)
+
+# for each hotspot tuple in template generate one question
+for h_tuple in template.get_h_tuple_dicts():
+	# compute absolute path to question directory
+	h_tuple['question'] = os.path.join(base_dir,h_tuple['question'])
+
+	# print status message
+	print 'creating '+h_tuple['question']
+
+	# create question directory if it does not exist
+	if not os.path.exists(h_tuple['question']):
+		os.mkdir(h_tuple['question'])
+
+	# create cqg_config.py
+	file_util.write_string \
+	 (os.path.join(h_tuple['question'],'cqg_config.py'), \
+	 generate_cqg_config(template,h_tuple))
+
+	# create source code, compiled if needed, and run script
+	template.get_source_language().generate_execute \
+	 (template,h_tuple,faulty_flag=False)
+	if template.get_question_type() == 'find_the_failure':
+		template.get_source_language().generate_execute \
+		 (template,h_tuple,faulty_flag=True)

@@ -1,0 +1,146 @@
+import os
+import code_activator_util
+import file_util
+import subprocess
+
+argc = 'len(sys.argv)'
+argv = 'ca_argv_'
+tgt = 'ca_targets'
+
+def declare_var(type,name):
+	'''
+	purpose
+		return the python code for declare name of type
+	precondition
+		type is a legal python string
+		name is a legal python string
+	'''
+	if type == 'int':
+		return name+' = 0\n'
+	if type == 'float':
+		return name+' = 0.0\n'
+	if type == 'string':
+		return name+" = ''\n"
+
+def declare_be_targets(count):
+	'''
+	purpose
+		return the declaration code of an int list of length count
+	prcondition
+		count is a int larger than 0
+	'''
+	return tgt +' = [0] * '+str(count)+'\n'
+
+def generate_check_targets(targets):
+	'''
+	purpose
+		return the code which checks whether all targets are hit
+	precondition
+		targets is a list of strings
+	'''
+	# check target_0 ... target_N
+	count = 0
+	s = 'if '
+	for i in range(len(targets)):
+		if targets[i]:
+			s += tgt+'['+str(count)+']'+' and '
+			count += 1
+	s = s[0:-4]+':\n\tsys.exit(0)\n'
+	s += 'else:\n\tsys.exit(1)\n'
+	return s
+	
+def set_bullseye(target,code,index):
+	'''
+	purpose
+		return the code set bullseye target code
+	precondition
+		target is a legal python string
+		code is a legal python string
+		index is a int
+	'''
+	# find the line that contains the target
+	target_line = ''
+	lines = code.split('\n')
+	for line in lines:
+		if target in line:
+			target_line = line
+			break
+	# replace the target with set flag code
+	return tgt+'['+str(index)+'] = 1'
+
+def write_run_sh(question_dir,executable_name):
+	if executable_name == "execute":
+		scriptpath = os.path.join(question_dir,"run.sh")
+	else:
+		scriptpath = os.path.join(question_dir,"faulty.sh")
+
+	# build execute command
+	cmd = '#!/bin/bash\n'
+	cmd += 'run_command="python '+executable_name+'.py"\n'
+	cmd += 'for x in "$@"\n'
+	cmd += 'do\n'
+	cmd += '\trun_command+=" \\"$x\\""\n'
+	cmd += 'done\n'
+	cmd += 'eval $run_command'
+
+	# write execute command in to .sh file
+	file_util.write_string(scriptpath,cmd)
+	subprocess.call(["chmod","u+x",scriptpath])
+
+def assign(dst,src):
+	return dst+' = '+src+'\n'
+
+def argv_ref(n):
+	return 'sys.argv['+str(n)+']'
+
+def stoi(s):
+	return 'int('+s+')'
+
+def stof(s):
+	return 'float('+s+')'
+
+def generate_execute(T,h_tuple,faulty_flag):
+	execute = 'import sys\n\n'
+
+	execute += code_activator_util.generate_variable_declaration(
+	 T,h_tuple)
+
+	# FIXME: would be cleaner if it were T.get_global_code(faulty_flag)
+	if faulty_flag:
+		execute += T.get_global_faulty_code()
+	else:
+		execute += T.get_global_execute_code()
+
+	execute += code_activator_util.generate_assign_argvs(T,h_tuple)
+	if faulty_flag:
+		execute += T.get_main_faulty_code()
+	else:
+		execute += T.get_main_execute_code()
+
+	# add "target hit" and flag checking code for bullseye
+	if T.get_question_type() == 'bullseye':
+		execute = code_activator_util.set_be_targets(T,execute,h_tuple)
+		target_values = []
+		for k in T.get_hotspot_names():
+			if T.get_hotspot_type(k) == 'target':
+				target_values.append(h_tuple[k])
+		execute += generate_check_targets(target_values)
+
+	execute = code_activator_util.replace_author_hotspots(T,execute,h_tuple)
+	execute = code_activator_util.replace_execute_hotspots(
+	 T,execute,h_tuple)
+
+	if faulty_flag:
+		executable_name = 'faulty'
+	else:
+		executable_name = 'execute'
+	file_util.write_string(
+	 os.path.join(h_tuple['question'],executable_name)+'.py',
+	 execute)
+	write_run_sh(h_tuple['question'],executable_name)
+        
+def generate_display(T,h_tuple):
+	display = T.get_global_display_code() + T.get_main_display_code()
+	display = code_activator_util.highlight_be_targets(T,display,h_tuple)
+
+	return display

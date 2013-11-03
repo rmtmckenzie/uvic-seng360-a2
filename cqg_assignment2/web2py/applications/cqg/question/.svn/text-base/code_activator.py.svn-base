@@ -1,0 +1,316 @@
+import os
+import glob
+import subprocess
+import re
+import errorlog
+
+import file_util
+import code_activator_util
+
+import string
+import html_util
+
+#FONT_SIZE = 4 # original
+FONT_SIZE = 5
+TAB_SIZE = 3
+CODE_CELL_WIDTH = 500 # pixels
+
+class question:
+	description = "Code Activator"
+	colour = "white"
+
+	def __init__(self,question_library_path,question_path='/dev/null'):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		self.path = os.path.join(question_library_path,question_path)
+
+		# load game type and parameter types
+		config_file = os.path.join(self.path,'cqg_config.py')
+		m = file_util.dynamic_import(config_file)
+		self.type = m.question_type
+		self.code_template = m.display
+		self.stdin_template = m.stdin
+		if 'stdout' in dir(m):
+			self.stdout_template = m.stdout
+		else:
+			self.stdout_template = ''
+		self.argvs_template = m.argvs
+
+		# keep hotspot information only for hotspots that are actually
+		# present (tolerates buggy generator scripts):
+		self.hotspot_declarations = {}
+		for k in m.hotspot_declarations.keys():
+			if k in (self.code_template
+				+self.stdin_template
+				+self.stdout_template
+				+self.argvs_template):
+				#coerce all list types to strings, since that's
+				#what we'll be getting from HTML/HTTP:
+				if type(m.hotspot_declarations[k]) is tuple:
+					m.hotspot_declarations[k] = (
+					 m.hotspot_declarations[k][0],
+					 [str(i) for i in
+					  m.hotspot_declarations[k][1]])
+				self.hotspot_declarations[k] = \
+				 m.hotspot_declarations[k]
+	
+	def get_question_library_path(self):
+		return self.question_library_path
+	
+	def get_question_path(self):
+		return self.question_path
+
+	def get_preview(self):
+		pass
+		'''
+		# provisional preview is all .txt files in question dir:
+		txtfiles = glob.glob(os.path.join(self.path,"*.txt"))
+		txtfiles.sort()
+		preview = ""
+		for i in txtfiles:
+			with open(i) as f:
+				preview += "--- "+os.path.split(i)[1]+" ---\n"
+				preview += f.read()
+				preview = preview.rstrip()+"\n\n"
+
+		return preview
+		'''
+	def get_css(self,answer):
+		return css_string
+
+	def get_html(self,answer):
+		return generate_html(self,self.answer_by_cells(answer))
+
+	def check_answer(self,answer):
+		#global/common checks
+		message = code_activator_util.check_values(
+		 self.hotspot_declarations,answer)
+		if message != None:
+			errorlog.write(self.path+" "+message)
+			return False
+		#if still OK, dispatch to subtype-specific checks
+		return self.my_check_answer(self.answer_by_cells(answer))
+
+	def get_input_element_ids(self):
+		return self.hotspot_declarations.keys()
+
+	#divide answer hotspots by cell, for easier checking
+	def answer_by_cells(self,answer):
+		cells = ['code','argvs','stdin','stdout']
+		answer_cells = {}
+		for c in cells:
+			answer_cells[c] = {}
+			for f in self.hotspot_declarations.keys():
+				#check whether hotspot is from this cell's
+				#template:
+				#FIXME: is there a substring matching problem
+				#here? i.e. will "$a" match "$abc" in the
+				#template?
+				if f in getattr(self,c+'_template'):
+					if answer.has_key(f):
+						answer_cells[c][f] = answer[f]
+					else:
+						answer_cells[c][f] = None
+		return answer_cells
+
+class input_output(question):
+	description = "Input/output"
+	colour = '#ff9900'
+
+	def my_check_answer(self,answer):
+		return code_activator_util.input_output_check_answer(
+		 answer,self.path,
+		 self.argvs_template,self.stdin_template,self.stdout_template)
+
+class bullseye(question):
+	description = "Bullseye"
+	colour = '#ff0033'
+
+	def my_check_answer(self, answer):
+		return code_activator_util.bullseye_check_answer(
+		 answer,self.path,
+		 self.argvs_template,self.stdin_template,self.stdout_template)
+
+class find_the_failure(question):
+	description = "Find the failure"
+	colour = '#66cc33'
+
+	def my_check_answer(self, answer):
+		return code_activator_util.find_the_failure_check_answer(
+		 answer,self.path,
+		 self.argvs_template,self.stdin_template,self.stdout_template)
+
+def get_textbox(name, value, type_hint=""):
+	'''
+	purpose
+		return the html code of a textbox
+	precondition
+		none
+	'''
+	if value == None:
+		value = ''
+	if type_hint != "":
+		type_hint = 'title="'+type_hint+'"'
+	return '<input type="text" name="'+name+'" value="'+value+'" \
+	style="height:24px;width:40px" '+type_hint+'>'
+
+def highlight_target(code):
+	'''
+	purpose
+		remove string 'ca_highlight'
+		highlight the rest of the line
+	precondition
+		template is a non-empty string
+	'''
+	start = code.find('ca_highlight')
+	while start != -1:
+		# find the place holder and target statement
+		end = code.find(';',start)
+		if end == -1:
+			end = code.find('\n',start+len('ca_highlight')+1)
+		holder = code[start:end] # ca_highlight and target statement
+
+		# find the target statement
+		start += len('ca_highlight') # go to the next line
+		while code[start] in string.whitespace:
+			start += 1
+		target_line = code[start:end]
+
+		# replace the place holder and the target statement
+		code = code.replace(holder,'<font color="blue"><b>'+\
+		 target_line+'</b></font>',1)
+		start = code.find('ca_highlight')
+	return code
+
+def gen_display(template,answer,hotspot_declarations):
+	'''
+	purpose
+		replace place holders in template by textbox or listbox
+	precondition
+		template is a non-empty string
+		answer is a dictionary of parameter-value pairs
+		ptypes is a dictionary of dictionaries
+	'''
+	type_hints = {
+		"int":"Integer required",
+		"float":"Float required",
+		"string":"String required",
+	}
+	for p in answer.keys():
+		if type(hotspot_declarations[p]) == tuple: #replace with listbox
+			template = template.replace(
+			 p,html_util.get_select(
+			  p,hotspot_declarations[p][1],answer[p]))
+		else: # replace with text box
+			template = template.replace(
+			 p,get_textbox(
+			  p,answer[p],type_hints[hotspot_declarations[p]]))
+	return template
+
+def generate_html(question,answer):
+	'''
+	Purpose
+		return the html code of a question
+	Precondition
+		quiz is a quiz object
+		0 < q_num <= quiz.get_count
+		answer is a nested dictionary of three sub-dictionaries
+	'''
+	html = html_base
+
+	# has to precede $CODE replacement
+	html = html.replace('$CODE_CELL_WIDTH',str(CODE_CELL_WIDTH))
+
+	# code cell
+	html = html.replace('$CODE',
+		gen_display(highlight_target(question.code_template),
+		 answer['code'],
+		question.hotspot_declarations))
+	# game type cell
+	html = html.replace('$GAME_TYPE',question.description)
+	html = html.replace('$BGCOLOR',question.colour)
+	# argv label and cell
+	html = html.replace('$ARGVS',
+		gen_display(question.argvs_template,answer['argvs'],
+		 question.hotspot_declarations))
+	# question selection cell
+	num_rows = 8
+	if question.type == 'input_output':
+		num_rows = 9
+	stdin_stdout_height = 157
+	# stdin cell
+	html = html.replace('$STDIN',gen_display(question.stdin_template,
+	 answer['stdin'],question.hotspot_declarations))
+	html = html.replace('$HEIGHT',str(stdin_stdout_height))
+	# stdout cell
+	if question.type == 'input_output':
+		html = html.replace('$STDOUT_HTML',stdout_html)
+		html = html.replace('$STDOUT',
+		 gen_display(question.stdout_template,answer['stdout'],
+		 question.hotspot_declarations))
+		html = html.replace('$HEIGHT',str(stdin_stdout_height))
+	else:
+		html = html.replace('$STDOUT_HTML',empty_cell)
+		html = html.replace('$HEIGHT',str(stdin_stdout_height+30))
+	# rowspan
+	html = html.replace('$NUM_ROWS',str(num_rows))
+	# font size specification
+	html = html.replace('$FONT_SIZE',str(FONT_SIZE))
+
+	html = html.replace('$TAB_SIZE_CSS',
+	 ";-moz-tab-size:N;-o-tab-size:N;tab-size:N;".replace("N",str(TAB_SIZE)))
+
+	html = html.replace('$RIGHT_CELL_WIDTH',str(760 - CODE_CELL_WIDTH))
+
+	return html
+
+html_base = '''
+<table cellspacing="0" bgcolor="lightgrey" style="border:0px;height:100%;">
+<tr>
+<td rowspan="$NUM_ROWS" class=padding>
+<pre style="height:548px;width:$CODE_CELL_WIDTHpx;overflow:auto;$TAB_SIZE_CSS">
+<font size="$FONT_SIZE">$CODE</font>
+</pre>
+</td>
+
+<td stype="height:30px" align="center" bgcolor="$BGCOLOR">
+<b><font size="5">$GAME_TYPE</font></b>
+</td>
+</tr>
+
+<tr><th style="height:30px">Command line arguments</th></tr>
+<tr><td valign="top">
+<pre style="height:50px;width:$RIGHT_CELL_WIDTHpx;overflow-x:auto">
+<font size="$FONT_SIZE">$ARGVS</font>
+</pre>
+</td></tr>
+
+<tr><th style="height:30px">Standard input</th></tr>
+<tr><td valign="top">
+<pre style="height:$HEIGHT;width:$RIGHT_CELL_WIDTHpx;overflow:auto">
+<font size="$FONT_SIZE">$STDIN</font>
+</pre>
+</td></tr>
+
+$STDOUT_HTML
+</table>
+'''
+
+stdout_html = '''
+<tr><th style="height:30px">Standard output</th></tr>
+<tr><td valign="top">
+<pre style="height:$HEIGHT;width:$RIGHT_CELL_WIDTHpx;overflow:auto">
+<font size="$FONT_SIZE">$STDOUT</font>
+</pre>
+</td></tr>
+'''
+
+empty_cell = '''
+<tr><td style="height:$HEIGHT">&nbsp;</td></tr>
+'''
+
+css_string = '''\
+#question_cell th,#question_cell td {
+ border: 1px solid black
+}
+'''

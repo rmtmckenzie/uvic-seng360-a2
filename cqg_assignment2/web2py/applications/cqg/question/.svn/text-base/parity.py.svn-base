@@ -1,0 +1,66 @@
+import os
+import file_util
+import html_util
+import parity_util
+
+BORDER = 1
+MIN_CELL_WIDTH = 36
+MIN_CELL_HEIGHT = 16
+
+class parity:
+	def __init__(self,question_library_path,question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(os.path.join(
+		 question_library_path,question_path,'cqg_config.py'))
+
+		self.code_word = parity_util.generate_code_word \
+		 (config.message,config.parity)
+		self.parity = config.parity
+		self.code_word_indexes = config.code_word_indexes
+	
+	def get_question_library_path(self):
+		return self.question_library_path
+	
+	def get_question_path(self):
+		return self.question_path
+
+	def get_html(self, answer):
+		if self.parity == 0:
+			parity_string = 'even'
+		else:
+			parity_string = 'odd'
+		html = "Complete the code word using parity: <b>" \
+		 + parity_string + "</b>"
+		
+		# generate select lists: one per bit, hot or not
+		select_lists = []
+		for i in range(len(self.code_word)):
+			if i in self.code_word_indexes:
+				select_lists += [html_util.get_select \
+				 ('bit_%i'%i,['','0','1'],answer['bit_%i'%i])]
+			else:
+				select_lists += [self.code_word[i]]
+
+		html += '<center>'
+		html += html_util.get_table \
+		 ([select_lists],BORDER,MIN_CELL_WIDTH,MIN_CELL_HEIGHT)
+		html += '</center>'
+
+		return html
+		
+	def get_input_element_ids(self):
+		ids = []
+		for i in range(len(self.code_word)):
+			if i in self.code_word_indexes:
+				ids.append('bit_' + str(i))
+		return ids
+
+	def check_answer(self, answer):
+		answer_code_word = ''
+		for i in range(len(self.code_word)):
+			if i in self.code_word_indexes:
+				answer_code_word += answer['bit_%i'%i]
+			else:
+				answer_code_word += self.code_word[i]
+		return parity_util.check_code_word(answer_code_word,self.parity)

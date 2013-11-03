@@ -1,0 +1,167 @@
+import os
+import code_activator_util
+import file_util
+import subprocess
+
+argc = 'args.length'
+argv = 'CA_JAVA.ca_argv_'
+tgt = 'CA_JAVA.ca_targets'
+
+'''
+purpose
+	return the java code for declare name of type
+precondition
+	type is a legal python string
+	name is a legal python string
+'''
+def declare_var(type,name):
+	if type == 'int':
+		return 'public static int '+name+' = 0;\n'
+	if type == 'float':
+		return 'public static float '+name+' = 0.0;\n'
+	if type == 'string':
+		return 'public static String '+name+' = "";\n'
+
+def declare_be_targets(count):
+        '''
+        purpose
+                return the declaration code of an array of length count
+        prcondition
+                count is a int larger than 0
+        '''
+        return 'static int[] ca_targets = new int['+str(count)+'];'
+
+'''
+purpose
+	return the code which checks whether all targets are hit
+precondition
+	targets is a list of strings
+'''
+def generate_check_targets(targets):
+	# check target_0 ... target_N
+	count = 0
+	s = 'if ('
+	for i in range(len(targets)):
+		if targets[i]:
+			s += tgt+'['+str(count)+'] > 0 && '
+			count += 1
+	s = s[0:-4]+')\n\tSystem.exit(0);\n'
+	s += 'else\n\tSystem.exit(1);\n'
+	return s
+
+def set_bullseye(target,code,index):
+	return tgt+'['+str(index)+'] = 1;'
+
+def get_execute_command(execute,is_faulty):
+	s = '#!/bin/bash\n'
+	if is_faulty:
+		s += 'cd faulty\n'
+	s += 'run_command="java '+execute+'"\n'
+	s += 'for x in "$@"\n'
+	s += 'do\n'
+	s += '\trun_command+=" \\"$x\\""\n'
+	s += 'done\n'
+	s += 'eval $run_command'
+	return s
+
+'''
+purpose
+	generate run.sh in dir path
+precondition
+	path is a legal python string
+	execute is a legal python string
+'''
+def write_run_sh(path,execute):
+	file_util.write_string(os.path.join(path,'run.sh'),
+	 get_execute_command(execute,False))
+	os.system('chmod u+x '+os.path.join(path,'run.sh'))
+
+'''
+purpose
+	generate file faulty.sh in dir path
+precondition
+	path is a legal python string
+	execute is a legal python string
+'''
+def write_faulty_sh(path,execute):
+	file_util.write_string(os.path.join(path,'faulty.sh'),
+	 get_execute_command(execute,True))
+	os.system('chmod u+x '+os.path.join(path,'faulty.sh'))
+
+def assign(dst,src):
+	return dst+' = '+src+';\n'
+
+def argv_ref(n):
+	return 'args['+str(n)+']'
+
+def stoi(s):
+	return 'Integer.parseInt('+s+')'
+
+def stof(s):
+	return 'Float.valueOf('+s+').floatValue()'
+
+CA_JAVA = '''\
+public class CA_JAVA {
+	$GLOBAL_VARS
+}
+'''
+
+def generate_execute(T,h_tuple,faulty_flag):
+	global_vars = code_activator_util.generate_variable_declaration(
+	 T,h_tuple)
+	ca_java = CA_JAVA.replace('$GLOBAL_VARS',global_vars)
+
+	execute = 'public class '+T.get_class_name()+' {\n'
+	# FIXME: would be cleaner if it were T.get_global_code(faulty_flag)
+	if faulty_flag:
+		execute += T.get_global_faulty_code()
+	else:
+		execute += T.get_global_execute_code()
+
+	execute += '\tpublic static void main(String[] args) {\n'
+	execute += code_activator_util.generate_assign_argvs(T,h_tuple)
+	if faulty_flag:
+		execute += T.get_main_faulty_code()
+	else:
+		execute += T.get_main_execute_code()
+
+	# add "target hit" and flag checking code for bullseye
+	if T.get_question_type() == 'bullseye':
+		execute = code_activator_util.set_be_targets(T,execute,h_tuple)
+		target_values = []
+		for k in T.get_hotspot_names():
+			if T.get_hotspot_type(k) == 'target':
+				target_values.append(h_tuple[k])
+		execute += generate_check_targets(target_values)
+
+	execute += '\t}\n}'
+
+	execute = code_activator_util.replace_author_hotspots(T,execute,h_tuple)
+	execute = code_activator_util.replace_execute_hotspots(
+	 T,execute,h_tuple)
+
+	old_dir = os.getcwd() # need to chdir for javac command
+	if faulty_flag: # make and change to faulty/ subdir
+		os.mkdir(os.path.join(h_tuple['question'],'faulty'))
+		os.chdir(os.path.join(h_tuple['question'],'faulty'))
+	else:
+		os.chdir(h_tuple['question'])
+	file_util.write_string('CA_JAVA.java',ca_java)
+	subprocess.call(['javac','CA_JAVA.java'])
+	file_util.write_string(T.get_class_name()+'.java',execute)
+	subprocess.call(['javac',T.get_class_name()+'.java'])
+	os.chdir(old_dir) # restore original cwd
+
+	if faulty_flag:
+		write_faulty_sh(h_tuple['question'],T.get_class_name())
+	write_run_sh(h_tuple['question'],T.get_class_name())
+        
+def generate_display(T,h_tuple):
+	display = 'public class '+T.get_class_name()+' {\n'
+	display += T.get_global_display_code()
+	display += '\tpublic static void main(String[] args) {\n'
+	display += T.get_main_display_code()
+	display += '\t}\n}'
+	display = code_activator_util.highlight_be_targets(T,display,h_tuple)
+
+	return display

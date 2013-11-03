@@ -1,0 +1,4 @@
+Removed stdout requirement for be, ff.
+--This line, and those below, will be ignored--
+
+M    bin/code_activator_template_verifier.py

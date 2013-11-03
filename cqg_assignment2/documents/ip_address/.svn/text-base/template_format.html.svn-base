@@ -1,0 +1,28 @@
+<h2>Question template format: ip_address</h2>
+
+This document explains the syntax and semantics of the ip_address
+question template.
+<p>
+The required variables and the restrictions on their values
+are specified by the Template Verification Conditions.
+<p>
+The variable <tt>group_list</tt> must contain a list of groups, where
+each group has the form:
+<p>
+[<i>group_name</i>, <i>question_vector_0</i>, <i>question_vector_1</i>, ...]
+<p>
+One question is generated for each question vector.
+The question generated from <i>question_vector_i</i> is stored in a directory
+with name constructed by appending <i>i</i> to <i>group_name</i>.
+<p>
+Each question vector is a list of:
+<ul>
+<li>For a "which network class?" question, one IP address
+<li>For an "are these two addresses on the same network?" question, two IP
+addresses
+<li>For an "are these two addresses on the same network?" question with subnet
+mask, two IP addresses and a subnet mask.
+</ul>
+<p>
+IP addresses and network masks are specified as 4-tuples of decimal integers,
+e.g. <tt>(127,0,0,1)</tt>.

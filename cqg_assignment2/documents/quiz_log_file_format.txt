@@ -1,0 +1,15 @@
+Log file format
+
+The log file consists of one or more blocks structured this way:
+<question>
+	<index>int</index>
+	<path>string</path>
+	<result>int</result>
+	<answer>dict_str</answer>
+	<time>int</time>
+</question>
+
+Where 'int' and 'string' are expected to be python literals of those types, and
+'dict_str' is a string representing a python dictionary of strings -- that is,
+when the contents of the <answer> element are passed to eval(), the result is a
+dictionary whose keys and values are all strings.

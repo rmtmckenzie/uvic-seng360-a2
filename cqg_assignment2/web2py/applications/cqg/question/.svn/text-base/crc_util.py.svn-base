@@ -1,0 +1,74 @@
+'''
+precondition for the next 5 functions
+	divisor_len,message_len must be positive ints
+'''
+def dividend_len(divisor_len,message_len):
+	return message_len + divisor_len - 1
+def quotient_len(divisor_len,message_len):
+	return message_len
+def remainder_len(divisor_len,message_len):
+	return divisor_len - 1
+def number_of_rows(divisor_len,message_len):
+	return 2*message_len - 1
+def row_width(divisor_len,message_len):
+	return divisor_len
+
+def xor(a,b):
+	'''
+	Purpose
+		xor two bitstrings
+	Precondition
+		a and b must be of the same length
+		a and b must be '0' or '1' only
+	'''
+	result = ''
+	for i in range(len(a)):
+		if(a[i] == b[i]):
+			result += '0'
+		else:
+			result += '1'
+	return result
+		
+def crc(divisor,message):
+	'''
+	purpose
+		returns a completed CRC calculation in the following components:
+		dividend: bitstring of message with len(divisor)-1 '0's appended
+		quotient: bitstring of quotient
+		remainder: the CRC
+		rows: list of calculation step bitstrings of len(divisor) bits
+	precondition
+		divisor,message are nonempty bitstrings
+		len(divisor) in [2..len(message)]
+		divisor begins with a '1'
+	'''
+	# init: append 0s to message
+	dividend = message + '0'*(len(divisor)-1)
+
+	# each iteration computes one quotient bit and two step rows
+	# leading bits of dividend treated as first row
+	rows = []
+	quotient = ''
+	current_row = dividend[0:len(divisor)]
+	for i in range(len(message)):
+
+		# "goes into" step: next quotient bit;
+		# determine row to xor with current
+		quotient += current_row[0]
+		if (current_row[0] == '1'):
+			rows.append(divisor)
+		else:
+			# a row of all zeroes
+			rows.append('0'*len(divisor))
+
+		xor_result = xor(current_row, rows[-1])
+
+		# next current_row: latter part of xor + copied-down bit
+		current_row = xor_result[1:]
+		# don't copy-down on last iteration (remainder)
+		if (i < len(message) - 1):
+			current_row += dividend[i+len(divisor)]
+		rows.append(current_row)
+
+	remainder = rows.pop()
+	return (dividend,quotient,remainder,rows)

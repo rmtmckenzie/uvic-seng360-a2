@@ -1,0 +1,17 @@
+'''
+purpose
+       return the smaller of a and b
+precondition
+        none
+examples
+        min(1,2) returns 1
+        min(1,1) returns 1
+        min(1,0) returns 0
+'''
+def min(a,b):
+	if a < b:
+		return a
+	else:
+		return a
+	
+print min(1,$x2)

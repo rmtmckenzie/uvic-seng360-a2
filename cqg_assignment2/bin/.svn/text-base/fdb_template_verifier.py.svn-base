@@ -1,0 +1,187 @@
+#!/usr/bin/python
+
+import sys
+import os
+
+valid_macs = ['a','b','c','d','e']
+valid_ports = [1,2,3,4]
+
+'''
+Purpose
+	print prefix,v_name+'['+level[i]+']',msg and exit the program
+Precondition
+	prefix,msg,v_name are legal python strings
+	level is iterable
+	level[i] is str or int
+'''
+def exit(prefix='',level=[],msg='',v_name='question_tuple'):
+	if type(level) == list:
+		for l in level:
+			if type(l) == str:
+				v_name += '[\''+l+'\']'
+			if type(l) == int:
+				v_name += '['+str(l)+']'
+	print prefix+v_name,msg
+	sys.exit()
+
+'''
+Purpose
+	Verify the traffic table data strucutre and values
+	Report violation if it is found and then exit
+Precondition
+	i and j are int
+	table is iterable
+'''
+def verify_traffic_table(i,j,table):
+	for k,row in enumerate(table):
+		if type(row) != list:
+			exit('',[i,j,'traffic_table',k],'is not of type list')
+		if len(row) != 3:
+			exit('length of ', [i,j,'traffic_table',k],\
+			  'is not equal to 3.')
+
+		for l in range(len(row[0:2])):
+			if type(row[l]) == str:
+				if row[l] not in valid_macs:
+					exit('',[i,j,'traffic_table',k,l],\
+					  'is not in '+str(valid_macs))
+			elif type(row[l]) == type(None):
+				continue
+			else:
+				exit('',[i,j,'traffic_table',k,l],\
+					'is not of type str or NoneType')
+
+		if type(row[2]) == int:
+			if row[2] not in valid_ports:
+				exit('',[i,j,'traffic_table',k,2],\
+				  'is not in '+str(valid_ports))
+		elif type(row[2]) == type(None):
+			break
+		else:
+			exit('',[i,j,'traffic_table',k,2],\
+			  'is not of type int or NoneType')
+'''
+Purpose
+	Verifiy fdb data structure and values
+	Report violation if it is found and then exit
+Precondition
+	i and j are int
+	fdb is iterable
+'''
+def verify_fdb(i,j,fdb):
+	if type(fdb) != list:
+		exit('',[i,j,'fdb'],'is not of type list')
+	if len(fdb) != 4:
+		exit('length of ',[i,j,'fdb'],'is not equal to 4.')
+	
+	for k,pl in enumerate(fdb):
+		if type(pl) == list:
+			if len(pl) > 5:
+				exit('length of ',[i,j,'fdb',k],\
+				  'is larger than 5.')
+			for l,mac in enumerate(pl):
+				if mac not in valid_macs:
+					exit('',[i,j,'fdb',k],'is not in '+\
+					  str(valid_macs))
+		elif type(pl) == type(None):
+			continue
+		else:
+			exit('',[i,j,'fdb',k],\
+			  'is not of type list or NoneType.')
+
+'''
+Purpose
+	Verifiy f_result data structure and values
+	Report violation if it is found and then exit
+Precondition
+	i and j are int
+	f_result is iterable
+'''
+def verify_f_result(i,j,f_result):
+	if type(f_result) != list:
+		exit('',[i,j,'f_result'],'is not of type list.')
+	if len(f_result) != 4:
+		exit('length of ',[i,j,'f_result'],'is not equal to 4')
+	for k,mac in enumerate(f_result[0:2]):
+		if type(mac) == str:
+			if mac not in valid_macs:
+				exit('',[i,j,'f_result',k],\
+				  'is not in '+str(valid_macs))
+		elif type(mac) == type(None):
+			continue
+		else:
+			exit('',[i,j,'f_result',k],\
+			  'is not of type str or NoneType.')
+
+	if type(f_result[2]) == int:
+		if f_result[2] not in valid_ports:
+			exit('',[i,j,'f_result',2],\
+			  'is not in '+str(valid_ports))
+	elif type(f_result[2]) == type(None):
+		pass
+	else:
+		exit('',[i,j,'f_result',2],'is not of type int or NoneType.')
+
+	if type(f_result[3]) == list:
+		if len(f_result[3]) > 4:
+			exit('length of ',[i,j,'f_result',3],\
+			  'is larger than 4.')
+		for l,port in enumerate(f_result[3]):
+			if port not in valid_ports:
+				exit('',[i,j,'f_result',3,l],\
+				  'is not in '+str(valid_ports))
+	elif type(f_result[3]) == type(None):
+		pass
+	else:
+		exit('',[i,j,'f_result',3],'is not of type list or NoneType.')
+
+# Check for valid command line arguments
+if len(sys.argv) != 2:
+	print 'Usage:',sys.argv[0],'<path_to_template_file>'
+	sys.exit(-1)
+
+# Check if the template can be imported
+try:
+	path = os.path.split(sys.argv[1])
+	sys.path.append(path[0])
+	template = __import__(path[1].replace('.py',''))
+except ImportError:
+	exit(sys.argv[1]+' cannot be imported.')
+
+# Check for necessary variables
+for v in ['question_tuples']:
+	if not v in dir(template):
+		exit('Variable ',[],'cannot be found in '+sys.argv[1])
+
+# question_tuples must be a list
+if type(template.question_tuples) != list:
+	exit('Variable ',[],'is not of type list.')
+
+for i in range(len(template.question_tuples)):
+	# Check question group
+	if type(template.question_tuples[i]) != list:
+		exit('',[i],'is not of type list.')
+	# Check question group prefix
+	if type(template.question_tuples[i][0]) != str:
+		exit('',[i,0],'is not of type str.')
+
+	for j in range(1, len(template.question_tuples[i])):
+		# Check for dictionary
+		if type(template.question_tuples[i][j]) != dict:
+			exit('',[i,j],'is not of type dict.')
+
+		# Check required keys and type of values
+		for key in ['traffic_table','fdb','f_result']:
+			if not key in template.question_tuples[i][j].keys():
+				exit('Key \''+key+'\' cannot be found in ',\
+				  [i,j],'')
+			if type(template.question_tuples[i][j][key]) != list:
+				exit('',[i,j,key],'is not of type list.')
+		
+		verify_traffic_table(i,j,\
+			template.question_tuples[i][j]['traffic_table'])
+
+		verify_fdb(i,j,template.question_tuples[i][j]['fdb'])
+
+		verify_f_result(i,j,\
+			template.question_tuples[i][j]['f_result'])

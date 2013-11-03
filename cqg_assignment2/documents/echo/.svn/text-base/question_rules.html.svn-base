@@ -1,0 +1,6 @@
+<h2>Question type: echo</h2>
+Each echo question displays a text field
+preceded by a non-negative integer label.
+<p>
+To answer the question correctly,
+you must enter the label value in the text box.

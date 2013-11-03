@@ -1,0 +1,31 @@
+DATE: Jul 31 2012
+TESTER: Hong-Yi & Felix
+FAILURE DESCRIPTION (specify CUT, inputs, actual output, failure argument):
+CUT:
+	code activator generator & instantiator
+inputs:
+	template: test_review/code_activator/questions/test_python_io.py
+	"1" in textbox
+actual output:
+	Message: Incorrect
+failure argument:
+	should be "Message: Correct"
+FAULT DESCRIPTION:
+missing "import sys" line in generated question's execute.py
+in main_code_template, $listbox quoting error
+DEVELOPER: Ming
+DATA: Aug 1 2012
+FIX:
+bin/
+	code_activator_generate.py
+		add call to get_global_precode()
+	code_activator_generate_C.py
+		global_precode() returns ""
+	code_activator_generate_python.py
+		global_precode() returns "import sys\n"
+	code_activator_generate_java.py
+		global_precode() returns ""
+test_review/code_activator/questions/test_python_io.py
+	moved $listbox outside double quotes
+
+=================================== - EOF - ===================================

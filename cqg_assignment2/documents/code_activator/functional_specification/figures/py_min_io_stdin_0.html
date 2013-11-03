@@ -1,0 +1,67 @@
+<html>
+<head>
+  <style type="text/css">
+    table,td,th{border:1px solid}
+    .padding {
+      padding-left: 3;
+    }
+  </style>
+</head>
+<h3>py_min_io_stdin_0 question, as it would look when played.</h3>
+This example of an Input/output question shows content in the code, argv, stdin, and stdout cells. The language is Python.
+<p>
+<form method="get">
+<table border="1" cellspacing="0" bgcolor="lightgrey">
+  <tr>
+    <td rowspan="10" valign="top" class=padding>
+      <div style="height:548px;width:500px;overflow:auto">
+        <pre><font size="4">def min(a,b):
+	if a < b:
+		return a
+	else:
+		return b
+	
+print min(4,
+	min(int(sys.argv[1]),int(sys.stdin.read())))
+</font></pre>
+      </div>
+    </td>
+    <td stype="height:30px" align="center" bgcolor="#ff9900">
+    <b><font size="5">Input/output</font></b></td>
+  </tr>
+  <tr><td align="center" style="height:50px;width:260px">
+    <input type="submit" style="height:30;width:180;font-size:100%" name="but" value="Check answer">
+  </td></tr>
+  
+    <tr><th style="height:30px">Command line arguments</th><tr>
+  <tr><td><div style="height:50px;width:260px;overflow-x:auto">
+    <pre>9</pre>
+  </div></td><tr>
+
+  
+<tr><th style="height:30px">Standard input</th></tr>
+  <tr><td valign="top">
+    <div style="height:157;width:260px;overflow:auto">
+      <pre>3</pre>
+    </div>
+  </td></tr>
+
+  
+<tr><th style="height:30px">Standard output</th></tr>
+  <tr><td valign="top">
+    <div style="height:157;width:260px;overflow:auto">
+      <pre><input type="text" name="$y0" value=""         style="height:24px;width:40px">
+</pre>
+    </div>
+  </td></tr>
+
+  <tr>
+    <th align="left" bgcolor="white">
+      <font color="black">Message: </font>
+    </th>
+    <th bgcolor="white"><p>&nbsp;</p></th>
+  </tr>
+  <input type="hidden" name="currqn" value="1">
+</table>
+</form>
+</html>

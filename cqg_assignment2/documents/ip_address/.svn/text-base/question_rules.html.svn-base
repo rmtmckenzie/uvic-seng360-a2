@@ -1,0 +1,10 @@
+<h2>Question type: ip_address</h2>
+There are three subtypes of IP address question:
+<ul>
+<li>A single IP address is displayed. To answer correctly, you must indicate
+its network class.
+<li>Two IP addresses are displayed. To answer correctly, you must indicate
+whether they are on the same network or not.
+<li>Two IP addresses and a subnet mask are displayed. To answer correctly, you
+must indicate whether they are on the same network or not.
+</ul>

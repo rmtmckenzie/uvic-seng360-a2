@@ -1,0 +1,32 @@
+<html>
+<head>
+<title>Generic Verification Process for Question Templates</title>
+</head>
+
+<h2>Generic Verification Process for Question Templates</h2>
+This document specifies the aspects of the testing and review process
+common to all question templates in the CQG system.
+<p>
+The verification tasks specific to question type <i>QT</i> are found in
+<br>
+<tt>testing_review/</tt><i>QT</i><tt>/verification_template_verification_plan.html</tt>.
+
+<h2>Review Process</h2>
+<dl>
+<dt>Safe<dd>
+Show that each generated question is safe:
+regardless of the answer, the check answer computation will terminate normally.
+<dt>Solvable<dd>
+For each generated question, there is at least one answer
+which will be marked "correct".
+<dt>Accurately marked<dd>
+Each answer, the check answer calculation is accurate.
+</dl>
+
+<h2>Test Process</h2>
+<dl>
+<dt>Template verifier<dd>
+Execute the template verifier against the template.
+</dl>
+
+</body></html>

@@ -1,0 +1,152 @@
+import os
+import code_activator_util
+import file_util
+import subprocess
+
+main_beginning = 'int main(int argc, char* argv[])\n{\n'
+main_ending = '\treturn 0;\n}\n'
+suffix = 'c'
+argc = 'argc'
+argv = 'ca_argv_'
+tgt = 'ca_targets'
+
+def declare_var(type,name):
+	'''
+	purpose
+		return the c code for declare name of type
+	precondition
+		type is a legal python string
+		name is a legal python string
+	'''
+	if type == 'string':
+		type = 'char*'
+	return type+' '+name+';\n'
+
+def declare_be_targets(count):
+        '''
+        purpose
+                return the declaration code of an array of length count
+        prcondition
+                count is a int larger than 0
+        '''
+        return 'int '+tgt +'['+str(count)+'] = {0};\n'
+
+def generate_check_targets(targets):
+	'''
+	purpose
+		return the code which checks whether all targets are hit
+	precondition
+		targets is a list of strings
+		question_type is a legal python string
+	'''
+        # check target_0 ... target_N
+        count = 0
+        s = 'if ('
+        for i in range(len(targets)):
+                if targets[i]:
+                        s += tgt+'['+str(count)+'] && '
+                        count += 1
+        s = s[0:-4]+')\n\treturn 0;\n'
+        s += 'else\n\treturn 1;\n'
+        return s
+
+def write_run_sh(executable_name,question_dir):
+	'''
+	purpose
+		create write ./execute $@ in file name in dir path
+	precondition
+		path is a legal python string
+		execute is a python string
+	'''
+	if executable_name == "execute":
+		scriptpath = os.path.join(question_dir,"run.sh")
+	else:
+		scriptpath = os.path.join(question_dir,"faulty.sh")
+
+	# build execute command
+	s = '#!/bin/bash\n'
+	s += 'run_command="./'+executable_name+'"\n'
+	s += 'for x in "$@"\n'
+	s += 'do\n'
+	s += '\trun_command+=" \\"$x\\""\n'
+	s += 'done\n'
+	s += 'eval $run_command'
+	
+	# write execute command in to .sh file
+	file_util.write_string(scriptpath,s)
+	subprocess.call(["chmod","u+x",scriptpath])
+
+def set_bullseye(target,code,index):
+	return tgt+'['+str(index)+'] = 1;'
+
+def assign(dst,src):
+	return dst+' = '+src+';\n'
+
+def argv_ref(n):
+	return 'argv['+str(n)+']'
+
+def stoi(s):
+	return 'atoi('+s+')'
+
+def stof(s):
+	return 'atof('+s+')'
+
+def generate_execute(T,h_tuple,faulty_flag):
+	# include stdlib for atoi(),atof() calls
+	S = '#include <stdlib.h>\n\n'	
+
+	# global code
+	S += code_activator_util.generate_variable_declaration(T,h_tuple)
+	if faulty_flag:
+		S += T.get_global_faulty_code()
+	else:
+		S += T.get_global_execute_code()
+
+	# main code
+	S += main_beginning
+	S += code_activator_util.generate_assign_argvs(T,h_tuple)
+	if faulty_flag:
+		S += T.get_main_faulty_code()
+	else:
+		S += T.get_main_execute_code()
+
+	# add "target hit" and flag checking code for bullseye
+	if T.get_question_type() == 'bullseye':
+		S = code_activator_util.set_be_targets(T,S,h_tuple)
+		target_values = []
+		for k in T.get_hotspot_names():
+			if T.get_hotspot_type(k) == 'target':
+				target_values.append(h_tuple[k])
+		S += generate_check_targets(target_values)
+
+	# main ending code
+	S += main_ending
+
+	# replace hotspots
+	S = code_activator_util.replace_author_hotspots(T,S,h_tuple)
+	S = code_activator_util.replace_execute_hotspots(T,S,h_tuple)
+
+	# create executable
+	old_dir = os.getcwd()
+	os.chdir(h_tuple['question'])
+	if faulty_flag:
+		file_util.write_string('faulty.c',S)
+		subprocess.call(['gcc','-std=c99','-o','faulty','faulty.c'])
+	else:
+		file_util.write_string('execute.c',S)
+		subprocess.call(['gcc','-std=c99','-o','execute','execute.c'])
+	os.chdir(old_dir)
+	
+	# create run/run_faulty
+	if faulty_flag:
+		write_run_sh('faulty',h_tuple['question'])
+	write_run_sh('execute',h_tuple['question'])
+        
+def generate_display(T,h_tuple):
+	display = T.get_global_display_code()
+	display += main_beginning
+	display += T.get_main_display_code()
+	display += main_ending
+	display = code_activator_util.highlight_be_targets(T,display,h_tuple)
+
+	return display

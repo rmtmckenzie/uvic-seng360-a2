@@ -1,0 +1,36 @@
+<HTML>
+<HEAD><TITLE>Submit answer message exchange diagram</title></HEAD>
+<BODY>
+
+<H1>Submit answer message exchange diagram</H1>
+<IMG SRC="submit_answer.png"/>
+<DL>
+<DT>HTTP request<DD>
+<CODE>http://cdoku.seng.uvic.ca:8080/cqg/quiz?but=Check+answer&amp;$y0=1&amp;currqn=1</CODE>
+
+<dt><code>index()</code><dd>
+invoke <code>index()</code> in 
+<code>controllers/quiz.py</code>
+
+<dt><code>get_html()</code><dd>
+invoke <code>get_html()</code> in 
+<code>quiz.py</code>.
+
+<dt><code>check_answer()</code><dd>
+invoke <code>check_answer()</code> in 
+<code>question/XXX.py</code>, where XXX is the question type.
+
+<dt>question HTML code<dd>
+HTML code of the question is returned by function <code>get_html()</code> in
+<code>question/XXX.py</code>, where XXX is the question type.
+
+<dt>page HTML code<dd>
+HTML code of the page is returned by <code>get_html()</code> in
+<code>quiz.py</code>.
+
+<dt>HTTP response<dd>
+web2py server packs the page HTML code into a HTTP response and send to client
+</DL>
+
+</BODY>
+<HTML>

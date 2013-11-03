@@ -1,0 +1,242 @@
+import os
+import copy
+
+class nat_question:
+	# path is a valid path to a NAT question file containing 'types.py'
+	# traffic is a list containing a number of 6-tuples
+	# entries in each 6-tuple must be strings
+	def __init__(self,question_library_path,question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(os.path.join(
+		 question_library_path,question_path,'cqg_config.py'))
+
+		self.traffic = config.traffic
+		self.tracking = config.tracking
+
+	def get_question_library_path(self):
+		return self.question_library_path
+	
+	def get_question_path(self):
+		return self.question_path
+
+	# answer is a dictionary with the keys in get_input_element_ids
+	def get_html(self,answer):
+		input_count = 0
+		conn_row = 0
+		s = "<h5>Private Interface: 10.0.0.1  Public Interface: 11.0.0.1</h5>"\
+			+"<h5>Public ports allocated sequentially from 5000</h5>"+"<center>"\
+			+"<table>"+"<tr>"+"<td>"+"Connection identifier"+"</td>"+"<td>"\
+			+"Arrival interface"+"</td>"+"<td>"+"Forwarded (Y or N)?"+"</td>"+"</tr>"
+
+		for i in range(len(self.traffic)):
+			s += "<tr>"+"<td>"+field("traf"+str(i)+"0",self.traffic[i][0],answer,9)+":"
+			s += field("traf"+str(i)+"1",self.traffic[i][1],answer,4)
+			s += " -> "+field("traf"+str(i)+"2",self.traffic[i][2],answer,9)+":"
+			s += field("traf"+str(i)+"3",self.traffic[i][3],answer,4)
+			s += "</td>"+"<td>"+field("traf"+str(i)+"4",self.traffic[i][4],answer,6)+"</td>"+"<td>"
+			s += field("traf"+str(i)+"5",self.traffic[i][5],answer)
+			s += "</td>"+"</tr>"
+
+		s += "</table>"+"</center>"
+
+		s += "<h5>Connection tracking table</h5>"+"<center>"+"<table>"+"<tr>"+"<td>"+"Private identifier"+"</td>"+"<td>"+"Public identifier"+"</td>"+"</tr>"
+
+		tracking = build_tracking_table(self.traffic)
+		for i in self.tracking:
+			tracking[i[0]][i[1]] = "$fillme"
+		for i in range(len(tracking)):
+			s += "<tr>"+"<td>"\
+				+field("con"+str(i)+"0",tracking[i][0],answer,9)+":"\
+				+field("con"+str(i)+"1",tracking[i][1],answer,4)+"->"\
+				+field("con"+str(i)+"2",tracking[i][2],answer,9)+":"\
+				+field("con"+str(i)+"3",tracking[i][3],answer,4)+"</td>"+"<td>"\
+				+field("con"+str(i)+"4",tracking[i][4],answer,9)+":"\
+				+field("con"+str(i)+"5",tracking[i][5],answer,4)+"->"\
+				+field("con"+str(i)+"6",tracking[i][6],answer,9)+":"\
+				+field("con"+str(i)+"7",tracking[i][7],answer,4)+"</td>"+"</tr>"
+		
+		s += "</table>"+"</center>"
+		return s
+	
+	def get_input_element_ids(self):
+		elements = []
+		
+		for i in range(len(self.traffic)):
+			for j in range(6):
+				if self.traffic[i][j].startswith('$'):
+					elements.append("traf"+str(i)+str(j))
+
+		tracking = build_tracking_table(self.traffic)
+		for i in self.tracking:
+			tracking[i[0]][i[1]] = "$fillme"
+		for i in range(len(tracking)):
+			for j in range(8):
+				if tracking[i][j].startswith('$'):
+					elements.append("con"+str(i)+str(j))
+		
+		return elements
+	
+	# answer is a dictionary with the keys in get_input_element_ids
+	def check_answer(self,answer):
+		# make a working copy of traffic list
+		traffic = copy.deepcopy(self.traffic)
+		
+		# complete it with student input
+		for i in range(len(traffic)):
+			for j in range(len(traffic[i])):
+				if traffic[i][j].startswith("$"):
+					traffic[i][j] = answer['traf'+str(i)+str(j)]
+					if j in (0,2) and not valid_ip(traffic[i][j]):
+						return False
+					elif j in (1,3) and not valid_port(traffic[i][j]):
+						return False
+					elif j == 4 and not valid_interface(traffic[i][j]):
+						return False
+					elif j == 5 and traffic[i][j] not in ('Y','y','N','n'):
+						return False
+
+		# build two working traffic tables:
+		# one from purely from the traffic...
+		computed_tracking = build_tracking_table(traffic)
+		# ...and another with student input
+		filled_tracking = copy.deepcopy(computed_tracking)
+		try:
+			for i in self.get_input_element_ids():
+				if i.startswith("con"):
+					x = int(i[3:-1])
+					y = int(i[-1])
+					filled_tracking[x][y] = answer[i]
+		except:
+			#FIXME: note that if it's possible for two packets to either be
+			# part of the same connection or not, e.g.
+			# 10.0.0.2:5000 -> 11.0.0.2:80
+			# 10.0.0.2:[hotspot] -> 11.0.0.2:80
+			# if [hotspot] gets the value 5000, this code is incapable of
+			# verifying the answer and always returns false. more precisely,
+			# this code is incapable of asking such a question in the first
+			# place, because the connection tracking table always gets the most
+			# "pessimistic" number of rows. students are then forced to reason
+			# from these extra rows that the value 5000 *cannot* be correct,
+			# i.e. the presence of the extra row indicates that that second row
+			# was in fact a separate connection.
+			return False
+
+		if computed_tracking != filled_tracking:
+			return False
+
+		# check forwarded yes/no against working tracking table
+		intermediate_traffic = []
+		intermediate_tracking = []
+		for packet in traffic:
+			if packet[4].lower() == 'private' and packet[5] not in ('Y','y'):
+				return False
+			elif packet[4].lower() == 'public':
+				if check_table(swap(packet[0:4]),intermediate_tracking,'public'):
+					if packet[5] in ('Y','y'):
+						pass # correctly marked 'would forward'
+					else:
+						return False
+				else:
+					if packet[5] in ('N','n'):
+						pass # correctly marked 'would not forward'
+					else:
+						return False
+			intermediate_traffic.append(packet)
+			intermediate_tracking = build_tracking_table(intermediate_traffic)
+
+		return True
+
+
+def field(name,author_value,answer,size=1):
+	if author_value.startswith('$'):
+		if name not in answer or answer[name] is None:
+			return "<input name='"+name+"' size='"+str(size)+"' />"
+		else:
+			return "<input name='"+name+"' value='"+answer[name]+"' size='"+str(size)+"' />"
+	else:
+		return str(author_value)
+
+# checks if identifier info exists in the given conn table
+def check_table(packet, conn_table, side):
+	for entry in range(len(conn_table)):
+		if side == 'private' and packet == conn_table[entry][0:4]:
+			return True
+		if side == 'public' and packet == conn_table[entry][4:]:
+			return True
+
+	return False
+
+# translates identifier info into public conn table format
+def address_translate(packet, new_port):
+	new_entry = []
+	public_addr = "11.0.0.1"
+
+	new_entry.append(public_addr)
+	new_entry.append(str(new_port))
+	new_entry.append(packet[2])
+	new_entry.append(packet[3])
+
+	return new_entry
+
+# swaps identifier info for packets
+# e.g. 11.0.0.2:80 -> 11.0.0.1:5000 becomes 11.0.0.1:5000 -> 11.0.0.2:80
+def swap(packet):
+	new_packet = []
+
+	new_packet.append(packet[2])
+	new_packet.append(packet[3])
+	new_packet.append(packet[0])
+	new_packet.append(packet[1])
+
+	return new_packet
+
+def build_tracking_table(packet_list):
+	conn_table = []
+	new_port = 5000
+
+	for i in range(len(packet_list)):
+		curr_packet = packet_list[i]
+
+		# checks if packet's connection exists
+		# if no, adds identifier info to table
+		# if yes, skips this packet
+		if curr_packet[4] == "private":
+			if not(check_table(curr_packet[0:4], conn_table, 'private')):
+				conn_table.append(curr_packet[0:4]\
+					+ address_translate(curr_packet, new_port))
+				new_port += 1
+
+	return conn_table
+
+def valid_ip(ip):
+	ip = ip.split(".")
+	if len(ip) != 4:
+		return False
+	try:
+		for i in range(4):
+			ip[i] = int(ip[i])
+	except:
+		return False
+	for i in (0,3):
+		if ip[i] < 1 or ip[i] > 255:
+			return False
+	for i in (1,2):
+		if ip[i] < 0 or ip[i] > 255:
+			return False
+	return True
+
+def valid_port(port):
+	try:
+		port = int(port)
+	except:
+		return False
+	if port < 1 or port > 65535:
+		return False
+	return True
+
+def valid_interface(interface):
+	if interface.lower() in ('public','private'):
+		return True
+	else:
+		return False

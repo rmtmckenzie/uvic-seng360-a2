@@ -1,0 +1,19 @@
+eop/
+	ch3
+		array_indexing_io
+		array_sum_io
+		div_mod_io
+		sample_statistics_io
+	ch7
+		none
+
+think_c/
+	new: array_sum slices
+		convert from lin sch sl
+	COMING:
+	shift_left(a,n,i)
+		shift a[i..n-1] to a[i-1..n-2]
+		delete i: sl(a,n,i); n--
+	shift_right(a,n,i)
+		shift a[i..n-1] to a[i+1..n-2]
+		insert x at i: sr(a,n,i); a[i] = x; n++

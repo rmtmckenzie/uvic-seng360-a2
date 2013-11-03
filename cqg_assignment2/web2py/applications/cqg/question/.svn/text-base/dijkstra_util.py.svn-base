@@ -1,0 +1,156 @@
+'''
+definitions
+	w_graph
+		an undirected weighted graph whose node ids are in A..L and
+		edges are in the set
+		 AB, BC, CD,
+		 AE, BF, CG, DH,
+		 EF, FG, GH,
+		 EI, FJ, GK, HL,
+		 IJ, JK, KL
+	minimal adjacency list
+		syntax
+			a dictionary ("outer dictionary") where each key is a
+			node id and each value is a dictionary ("inner
+			dictionary") in which each key is a node id and each
+			value is an integer weight
+		semantic constraints
+			each edge occurs at most once
+		meaning
+			{A: {B: 5, E: 2}} means the w_graph with nodes A, B, E
+			and edges AB with weight 5 and AE with weight 2
+	symmetric adjacency list
+		syntax: same as minimal adjacency list
+		semantic constraints
+			if an edge is present, it is described twice: an edge
+			XY with weight W occurs in the inner dictionary for X
+			and the inner dictionary for Y. the weight must be W in
+			both occurrences.
+		meaning
+			{A: {B: 5, E: 2},
+			B: {A: 5},
+			E: {A: 2}} means the w_graph with nodes A, B, E
+			and edges AB with weight 5 and AE with weight 2
+'''
+
+# hint: [chr(x) for x in range(ord('A'),ord('M'))]
+ALLOWED_NODES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
+ALLOWED_EDGES = [
+	'AB', 'BC', 'CD',
+	'AE', 'BF', 'CG', 'DH',
+	'EF', 'FG', 'GH',
+	'EI', 'FJ', 'GK', 'HL',
+	'IJ', 'JK', 'KL',
+]
+
+def get_nodes(graph):
+	'''
+	purpose
+		returns a list of all nodes in graph
+		note: returned list may have duplicates
+	precondition
+		graph has passed check_graph() or is from a w_graph intance
+	'''
+	nodes = []
+	for outer_key in graph:
+		nodes.append(outer_key)
+		for inner_key in graph[outer_key]:
+			nodes.append(inner_key)
+	return nodes
+
+def get_edges(graph):
+	'''
+	purpose
+		returns a list of all edges in graph, standardized into the form
+		in ALLOWED_EDGES -- e.g. an edge JF will be returned as FJ.
+		note: returned list may have duplicates
+	precondition
+		graph has passed check_graph() or is from a w_graph instance
+	'''
+	edges = []
+	for outer_key in graph:
+		for inner_key in graph[outer_key]:
+			if outer_key+inner_key in ALLOWED_EDGES:
+				edges.append(outer_key+inner_key)
+			else:
+				edges.append(inner_key+outer_key)
+	return edges
+
+class w_graph:
+	def __init__(self,minimal):
+		'''
+		precondition
+			minimal is a minimal adjacency list
+		'''
+		self.graph = self.make_symmetric(minimal)
+	
+	def make_symmetric(self,minimal):
+		'''
+		purpose
+			returns a copy of minimal in which all edge weights are
+			addressable by either endpoint
+		precondition
+			minimal is a minimal adjacency list
+		'''
+		symmetric = {}
+		for node in minimal:
+			if node not in symmetric:
+				symmetric[node] = {}
+			for adjacent_node in minimal[node]:
+				symmetric[node][adjacent_node] = \
+				 minimal[node][adjacent_node]
+				if adjacent_node not in symmetric:
+					symmetric[adjacent_node] = {}
+				symmetric[adjacent_node][node] = \
+				 minimal[node][adjacent_node]
+		return symmetric
+
+	def dijkstra(self,s,d):
+		'''
+		purpose
+			runs dijkstra's algorithm on self.graph and returns
+			list of dictionaries of node weights after each
+			iteration. i.e. return value has the form:
+			[{node: weight, node: weight, ...}, ...]
+		precondition
+			s and d are nodes in self.graph
+		'''
+		result = []
+
+		# P: permanent set ("visited" nodes)
+		P = {s:0} # dictionary of node: shortest path weight
+
+		# unvisited: nodes not in P, i.e. N - P
+		unvisited = {} # dictionary of node: tentative weight
+
+		for node in self.graph:
+			unvisited[node] = float('inf')
+		del unvisited[s] # remove s, as s already in P
+
+		w = s # w: working node; initialize to starting node
+		while d not in P:
+
+			# examine nodes adjacent to w, not already in P
+			for x in [node for \
+			 node in self.graph[w] if node not in P]:
+
+				# calculate new tentative weight
+				dx = P[w] + self.graph[w][x]
+
+				# relabel x with this weight if smaller
+				if dx < unvisited[x]:
+					unvisited[x] = dx
+
+			# next w: unvisited node with smallest tentative weight
+			min_weight = float('inf')
+			for node in unvisited:
+				if unvisited[node] < min_weight:
+					min_weight = unvisited[node]
+					x0 = node
+			P[x0] = unvisited.pop(x0)
+			w = x0
+
+			# FIXME: next line too tricky?
+			result.append(dict(P.items() + unvisited.items()))
+	
+		return result

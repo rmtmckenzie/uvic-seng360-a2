@@ -1,0 +1,16 @@
+def caesar_encrypt(plain_text,key):
+	'''
+	Purpose
+		returns plain_text encrypted using the caesar cipher with key
+		key
+	Precondition
+		plain_text is a string of chars in A..Z
+		key is an int
+	'''
+	C = ''
+	alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+	for p in plain_text:
+		p_i = alphabet.index(p)
+		c_i = (p_i+key) % len(alphabet)
+		C += alphabet[c_i] # DR1
+	return C

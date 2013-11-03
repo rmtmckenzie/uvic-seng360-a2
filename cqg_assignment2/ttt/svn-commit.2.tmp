@@ -1,0 +1,4 @@
+Upgrade to use generate functions.
+--This line, and those below, will be ignored--
+
+M    crc/crc.py

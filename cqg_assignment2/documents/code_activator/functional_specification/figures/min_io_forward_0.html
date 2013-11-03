@@ -1,0 +1,74 @@
+
+<html>
+<head>
+  <style type="text/css">
+    table,td,th{border:1px solid}
+    .padding {
+      padding-left: 3;
+    }
+  </style>
+</head>
+<h3>min_io_forward_0 question, as it would look when played.</h3>
+The language is C.
+<p>
+<form method="get">
+<table border="1" cellspacing="0" bgcolor="lightgrey">
+  <tr>
+    <td rowspan="10" valign="top" class=padding>
+      <div style="height:548px;width:500px;overflow:auto">
+        <pre><font size="4">#include &lt;stdio.h>
+
+int min(int a, int b) {
+	if (a < b) {
+		return a;
+	} else {
+		return b;
+	}
+}
+int main(int argc, char* argv[])
+{
+	printf("%d\n", min(1,2));
+	return 0;
+}
+</font></pre>
+      </div>
+    </td>
+    <td stype="height:30px" align="center" bgcolor="#ff9900">
+    <b><font size="5">Input/output</font></b></td>
+  </tr>
+  <tr><td align="center" style="height:50px;width:260px">
+    <input type="submit" style="height:30;width:180;font-size:100%" name="but" value="Check answer">
+  </td></tr>
+  
+    <tr><th style="height:30px">Command line arguments</th><tr>
+  <tr><td><div style="height:50px;width:260px;overflow-x:auto">
+    <pre></pre>
+  </div></td><tr>
+
+  
+<tr><th style="height:30px">Standard input</th></tr>
+  <tr><td valign="top">
+    <div style="height:157;width:260px;overflow:auto">
+      <pre></pre>
+    </div>
+  </td></tr>
+
+  
+<tr><th style="height:30px">Standard output</th></tr>
+  <tr><td valign="top">
+    <div style="height:157;width:260px;overflow:auto">
+      <pre><input type="text" name="$y0" value=""         style="height:24px;width:40px">
+</pre>
+    </div>
+  </td></tr>
+
+  <tr>
+    <th align="left" bgcolor="white">
+      <font color="black">Message: </font>
+    </th>
+    <th bgcolor="white"><p>&nbsp;</p></th>
+  </tr>
+  <input type="hidden" name="currqn" value="1">
+</table>
+</form>
+</html>

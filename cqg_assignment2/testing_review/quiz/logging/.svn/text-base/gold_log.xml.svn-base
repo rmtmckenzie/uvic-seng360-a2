@@ -1,0 +1,28 @@
+<question>
+	<index>0</index>
+	<path>/tmp/home/temp/cqg/question_library/code_activator/testing/test_c_io_0</path>
+	<result>4</result>
+	<answer>{'currqn': '0', '$textbox': '1', 'but': 'Submit answer'}</answer>
+	<time>0</time>
+</question>
+<question>
+	<index>1</index>
+	<path>/tmp/home/temp/cqg/question_library/code_activator/testing/test_c_be_0</path>
+	<result>4</result>
+	<answer>{'currqn': '1', '$textbox': '1', 'but': 'Submit answer'}</answer>
+	<time>0</time>
+</question>
+<question>
+	<index>2</index>
+	<path>/tmp/home/temp/cqg/question_library/code_activator/testing/test_c_ff_0</path>
+	<result>0</result>
+	<answer>{'currqn': '2', '$textbox': '9', 'but': 'Submit answer'}</answer>
+	<time>0</time>
+</question>
+<question>
+	<index>1</index>
+	<path>/tmp/home/temp/cqg/question_library/code_activator/testing/test_c_be_0</path>
+	<result>0</result>
+	<answer>{'currqn': '1', '$textbox': '9', 'but': 'Submit answer'}</answer>
+	<time>1</time>
+</question>

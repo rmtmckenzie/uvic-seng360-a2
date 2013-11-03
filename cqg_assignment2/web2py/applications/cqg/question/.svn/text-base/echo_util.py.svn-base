@@ -1,0 +1,18 @@
+def str_to_int(s):
+	'''
+	purpose:
+		if s consists of a non-negative int
+			return s as an int
+		else
+			return None
+	preconditions:
+		s is a string
+	'''
+	try:
+		n = int(s)
+		if n >= 0:
+			return n
+		else:
+			return None
+	except ValueError:
+		return None

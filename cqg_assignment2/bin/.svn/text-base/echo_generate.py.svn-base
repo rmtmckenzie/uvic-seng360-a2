@@ -1,0 +1,46 @@
+#!/usr/bin/python
+
+import sys
+import os
+import file_util
+
+template_string = '''\
+product_family = 'echo'
+question_type = 'echo'
+
+correct_answer = $x
+'''
+
+if len(sys.argv) != 3:
+	print 'Usage: echo_generate.py template question_directory' 
+	sys.exit(1)
+
+try:
+	template = file_util.dynamic_import(sys.argv[1])
+except:
+	print 'Failure while importing',sys.argv[1]
+	sys.exit(2)
+
+question_id = 0
+for i in template.tuples:
+	path = os.path.join(sys.argv[2],'echo_'+str(question_id))
+
+	# create the question directory if necessary
+	if not os.path.exists(path):
+		try:
+			os.mkdir(path)
+		except:
+			print 'Failure creating directory:', path
+			sys.exit(3)
+
+	# write the next template
+	types = os.path.join(path,'cqg_config.py')
+	try:
+		f = open(types,"w")
+		f.write(template_string.replace('$x',str(i)))
+		f.close()
+	except:
+		print 'Failure creating file:', path
+		sys.exit(4)
+
+	question_id += 1

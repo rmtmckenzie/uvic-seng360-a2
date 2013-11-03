@@ -1,0 +1,82 @@
+import os
+import file_util
+import html_util
+import caesar_util
+
+class caesar:
+	def __init__(self,question_library_path,question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(os.path.join(
+		 question_library_path,question_path,'cqg_config.py'))
+
+		self.plain_text = config.plain_text
+		self.key = config.key
+		self.hotspots = config.cipher_text_hotspots
+
+		self.cipher_text = caesar_util.caesar_encrypt(
+		 self.plain_text,self.key)
+
+	def get_question_library_path(self):
+		return self.question_library_path
+	
+	def get_question_path(self):
+		return self.question_path
+
+	def get_css(self,answer):
+		return CSS_STRING + html_util.make_css_borders(1)
+
+	def get_html(self,answer):
+		html = '<p>Use a <b>caesar</b> cipher with key '+\
+		 str(self.key)+' to encrypt the plain text.</p>'
+	
+		# create html textboxes for hotspots in ciphertext
+		cipher_text_row = list(self.cipher_text)
+		for i in self.hotspots:
+			element_id = 'char_'+str(i)
+			if (answer[element_id] is None): # DR1
+				value = ''
+			else:
+				value = answer[element_id] # DR2
+			cipher_text_row[i] = html_util.get_text( # DR3
+			 element_id,value,size=1)
+
+		html += '<center>'
+		html += html_util.get_table([
+		 [('plain text','right')] + \
+		  [(c,'left_border center tt') for c in self.plain_text],
+		 [('cipher text','top_border right')] + \
+		  [(c,'left_border top_border tt') for c in cipher_text_row]
+		 ],'cellspacing=0 cellpadding=3')
+		html += '</center>'
+		return html
+	
+	def get_input_element_ids(self):
+		ids = []
+		for i in self.hotspots:
+			ids.append('char_'+str(i))
+		return ids
+
+	def check_answer(self,answer):
+		# subsitute submitted values into ciphertext
+		student_answer_list = list(self.cipher_text)
+		for i in self.hotspots:
+			student_answer_list[i] = answer['char_'+str(i)] # DR1, DR2
+		student_answer = ''.join(student_answer_list)
+		
+		return student_answer == self.cipher_text
+
+CSS_STRING = '''\
+.tt {
+  font-family: monospace;
+}
+.right {
+  text-align: right;
+}
+.center {
+  text-align: center;
+}
+#question_cell {
+  border: 1px solid black
+}
+'''

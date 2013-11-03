@@ -1,0 +1,15 @@
+import caesar_util
+
+caesar_tests = [
+#plaintext,key,expected ciphertext
+['A',	1,	'B'],
+['Z',	1,	'A'],
+['A',	25,	'Z'],
+['Z',	25,	'Y'],
+]
+
+for t in caesar_tests:
+	result = caesar_util.caesar_encrypt(t[0],t[1])
+	if result != t[2]:
+		print "caesar_encrypt() fails on "+str(t)
+		print "actual result: "+result

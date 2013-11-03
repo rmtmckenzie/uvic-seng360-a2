@@ -1,0 +1,53 @@
+V1.00 -- May 16, 2011
+the initial versiono of codeAct
+
+V1.01 -- Jun 6, 2011
++ updated comments in template_verifier.py
++ fixed bug: navigation buttons are not disabled in Chrome/Firefox4
+
+v1.10 -- Oct 18, 2011
++ added support for JAVA in all four game types
++ added Python and JAVA tutorial quiz
++ added support for testing with selenimu
++ removed function call in tutorial questions
+
+V1.11 -- Oct 27, 2011
++ added Java and Python examples in tutorial
++ added c sort question templates
++ added c_sort quiz spec
+
+v1.2 -- Dec 5, 2011
++ renamed main framework from codeAct to cqg (Computational Quiz Generation)
++ major code refactoring to remove codeAct-centric organization
++ gen_ca.py script replaced with new setup.sh script
+
+v1.21 -- Dec 13, 2011
++ updated documentation to match new code organization
++ added qspec_gui.py
++ updated template_verifier.py
+
+v1.22 -- Dec 13, 2011
++ fixed bug: setup.sh failed when web2py_src.zip contained altered
+  web2py dir name
+
+v1.23 -- Dec 21, 2011
+interim release; will need lots of bug fixes before production use
++ made logging work again
+! log format changed - uses new answer dictionary format from v1.2
++ added logging tests
+
+v1.24 -- Mar 8, 2012
+special release for Spring SENG 265 Programming Exercise 3
++ new quiz_spec_gui.py (student version only; missing features)
++ question object now has a .get_preview() method, inteded for use
+  in the above GUI.
+
+v1.25* -- May 7-14, 2012
+(development versions)
+
+v1.26 -- May 16, 2012
+AST release
++ crc and hamming questions added
++ quiz composer and quiz gui now use RE instead of globbing
++ quiz gui UI changes
++ question verifier added

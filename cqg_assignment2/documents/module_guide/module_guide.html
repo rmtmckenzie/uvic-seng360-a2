@@ -1,0 +1,162 @@
+<HTML>
+<HEAD>
+<TITLE>Code Activator Module Guide</TITLE>
+<STYLE TYPE="text/css">
+	body {
+		counter-reset: chapter; /* Create a chapter counter scope */
+	}
+	h1:before {
+		content: counter(chapter) ". ";
+		counter-increment: chapter; /* Add 1 to chapter */
+	}
+	h1 {
+		font-size:18pt;
+		counter-reset: section; /* Set section to 0 */
+	}
+	h2:before {
+		content: counter(chapter) "." counter(section) " ";
+		counter-increment: section;
+	}
+</STYLE>
+</HEAD>
+<BODY>
+
+<H1>CQG Module Guide</H2>
+
+<H2>Server modules</H2>
+
+<H3>Message Exchange</H2>
+The web2py framework serves as the go-between
+for web clients and the CQG implementation.
+The message exchange diagrams below show the chain
+of HTTP messages and function calls occurring for each of the
+three kinds of client request:
+retrieve a static HTML page, generate and retrieve a question page, and
+process a question check or submit request.
+The implementations of the CQG server modules
+are stored in the directory tree
+<code>web2py/applications/cqg/</code>.
+
+In the three message exchange diagrams
+<ol>
+<li>
+<a href="static_html.html">Static HTML message exchange diagram.</A>
+<li>
+<a href="start_quiz.html">Start quiz message exchange diagram.</A>
+<li>
+<a href="submit_answer.html">Submit answer message exchange diagram.</A>
+</ol>
+the following conventions are used
+<ul>
+<li>
+All named directories are subdirectories of
+<code>web2py/applications/cqg/</code>,
+<li>
+an arrow represents a message,
+either an HTTP request/response or a Python function call/return;
+<li>
+the vertical position of the message indicates
+the order of message transmission:
+earlier messages appear above later messages; and
+<li>
+a rectangle and the attached vertical line
+represents the message source or destination.
+</ul>
+
+<H3>Module Service and Implementation</H3>
+<dl>
+<dt>Question Module<dd>
+	<dl>
+	<dt>Service<dd>
+	Provides the question class and a subclass for each question type.
+	Generates the strings associated with each question display (sub-)cell.
+	Performs answer checking.
+	<dt>Implementation<dd>
+	<code>web2py/applications/cqg/question/XXX.py</code>
+	, where XXX is the question type.
+	</dl>
+<dt>Quiz Module<dd>
+	<dl>
+	<dt>Service<dd>
+	Given a quiz specification on disk,
+	loads the specified questions for later access.
+	<dt>Implementation<dd>
+	<code>web2py/applications/cqg/controllers/quiz.py</code>
+	<br />
+	<code>web2py/applications/cqg/quiz.py</code>
+	</dl>
+</dl>
+
+<H2>Generation modules</H2>
+<dl>
+<dt>Question Generator Module<dd>
+	<dl>
+	<dt>Service<dd>
+	From a question template file,
+	generate one question for each tuple.
+	<dt>Implementation<dd>
+	<code>generate/generate.py</code>
+	<br />
+	<code>generate/generate_C.py</code>
+	<br />
+	<code>generate/generate_python.py</code>
+	<br />
+	<code>generate/question_template.py</code>
+	<br />
+	<code>generate/tuple_converter.py</code>
+	</dl>
+<dt>Question Template Verification Module<dd>
+	<dl>
+	<dt>Service<dd>
+	Check a question template file for syntax and type errors.
+	<dt>Implementation<dd>
+	<code>generate/tuple_list_verifier.py</code>
+	<br />
+	<code>generate/template_verifier.py</code>
+	</dl>
+<dt>Question Specification Verification Module<dd>
+	<dl>
+	<dt>Service<dd>
+	Check a quiz specification file for syntax and type errors.
+	<dt>Implementation<dd>
+	<code>quiz_specs/qspec_verifier.py</code>
+	</dl>
+</dl>
+
+<H2>Log file creation and analysis modules</H2>
+<dl>
+<dt>Log File Module<dd>
+	<dl>
+	<dt>Service<dd>
+	Provides methods to create a log file and to add
+	an entry corresponding to a check or submit answer request.
+	<dt>Implementation<dd>
+	<code>web2py/applications/codeAct/ca_log_create.py</code>
+	</dl>
+<dt>Quiz Mark Module<dd>
+	<dl>
+	<dt>Service<dd>
+	From a log file, generate quiz mars in connex gradebook, plot,
+	and raw formats.
+	<dt>Implementation<dd>
+	<code>quiz_log/mark_connex.py</code>
+	<br />
+	<code>quiz_log/mark_plot.py</code>
+	<br />
+	<code>quiz_log/mark_raw.py</code>
+	</dl>
+<dt>Mark Analysis Module<dd>
+	<dl>
+	<dt>Service<dd>
+	PROTOTYPE.
+	<dt>Implementation<dd>
+	<code>quiz_log/log_analysis.py</code>
+	<br />
+	<code>quiz_log/gen_report.py</code>
+	<br />
+	<code>quiz_log/distribution.r</code>
+	</dl>
+</dl>
+
+</BODY>
+</HTML>

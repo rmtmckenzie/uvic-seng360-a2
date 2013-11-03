@@ -1,0 +1,318 @@
+import re
+import subprocess
+
+def check_values(hotspot_declarations,answer):
+	'''
+	Purpose
+		type-check hotspots in answer
+		if all fields are type correct
+			return None
+		else
+			return the key of one of the answers which fails
+	Preconditions
+		hotspot_declarations is a dictionary where the keys are hotspot
+		 names and the values are hotspot types
+		answer is a dictionary where the keys are hotspot names and the
+		 values are student inputs
+	'''
+	for h in hotspot_declarations.keys():
+		if hotspot_declarations[h] == 'int':
+			if not check_int(answer[h]):
+				return h
+		elif hotspot_declarations[h] == 'float':
+			if not check_float(answer[h]):
+				return h
+		elif hotspot_declarations[h] == 'string':
+			if not check_string(answer[h]):
+				return h
+		#for list types, ensure submitted value is in list
+		elif type(hotspot_declarations[h]) is tuple:
+			if answer[h] not in hotspot_declarations[h][1]:
+				return h
+		else:
+			return "Unknown key"
+	return None
+
+
+def check_int(s):
+	'''
+	purpose
+		return True iff s is a legal CA integer
+		with optional leading and trailing spaces
+	precondition
+		s is a string
+	'''
+	return re.match("^[+-]?\d{1,5}$",s) != None
+
+def check_float(s):
+	'''
+	purpose
+		return True iff s is a legal CA float
+		with optional leading and trailing spaces
+	precondition
+		s is a string
+	'''
+	return re.match("^[+-]?\d{1,5}\.\d{1,5}$",s) != None
+
+def check_string(s):
+	'''
+	purpose
+		return True iff s is a legal CA string
+	precondition
+		s is a string
+	'''
+	return re.match("^[a-zA-Z0-9_\.+\- ]*$",s) != None
+
+def remove_trailing_newline(s):
+	while s.endswith('\n'):
+		s = s[:-1]
+	return s
+
+def build_argvs(argvs_template,answer):
+	argv = argvs_template
+	for k in answer['argvs'].keys():
+		argv = argv.replace(k, answer['argvs'][k])
+	L = answer['code'].keys()
+	# sort the keys to make sure each argv value is given to the 
+	# desired hotspots in code cell
+	L.sort()
+	for arg in L:
+		argv += ' "' + answer['code'][arg] + '"'
+	return argv
+
+def build_stdin(stdin_template,answer):
+	stdin = stdin_template
+	for param in answer['stdin'].keys():
+		stdin = stdin.replace(param,answer['stdin'][param],1)
+	return stdin
+
+def build_stdout(stdout_template,answer):
+	stdout = stdout_template
+        for param in answer['stdout'].keys():
+                stdout = stdout.replace(param,
+                answer['stdout'][param],1)
+	return stdout
+
+#FIXME: more study of subprocess needed. things wrong currently:
+# - shell = True -- shouldn't be necessary, and opens security hole
+# - chdir should be possible with cwd= parameter instead of cd ... ;?
+# - command line arguments should be escaped by sending as an array; unclear
+#   whether this fully escapes even when shell = True
+def run_shell_command(command,stdin):
+        process = subprocess.Popen(
+         command,
+         stdin = subprocess.PIPE,stdout = subprocess.PIPE,shell = True)
+        execuation_output = process.communicate(stdin)[0]
+	# FIXME: not safe against non-terminating questions
+        return_code = process.wait()
+	return (execuation_output,return_code)
+
+def input_output_check_answer(answer,path,
+ argvs_template,stdin_template,stdout_template):
+	'''
+	Purpose
+		run question executable located at path by using
+		 argvs_template, stdin_template, and stdout_template
+		if student's answer matches actual output
+			return true
+		else
+			return false
+	Preconditions
+		answers is a dictionary contains three sub-dictionaries
+		path: the path to an io question
+		argvs_template is a string
+		stdin_template is a string
+		stdout_template is a string
+	'''
+	argv = build_argvs(argvs_template,answer)
+	stdin = build_stdin(stdin_template,answer)
+	substitution_output = build_stdout(stdout_template,answer)
+	execuation_output = run_shell_command('cd '+path+';./run.sh '+argv,
+	 stdin)[0]
+
+	# compare actual output and expected output
+	substitution_output = remove_trailing_newline(substitution_output)
+	execuation_output = remove_trailing_newline(execuation_output)
+	return substitution_output == execuation_output
+
+def bullseye_check_answer(answer,path,
+ argvs_template,stdin_template,stdout_template):
+	'''
+	Purpose
+		run question executable located at path by using
+		 argvs_template, stdin_template, and stdout_template
+		if student's answer matches actual output
+			return true
+		else
+			return false
+	Preconditions
+		answers is a dictionary contains three sub-dictionaries
+		path is a string
+		argvs_template is a string
+		stdin_template is a string
+		stdout_template is a string
+	'''
+	argv = build_argvs(argvs_template,answer)
+	stdin = build_stdin(stdin_template,answer)
+	return_code = run_shell_command('cd '+path+';./run.sh '+argv,stdin)[1]
+
+	return return_code == 0
+
+def find_the_failure_check_answer(answer,path,
+ argvs_template,stdin_template,stdout_template):
+	'''
+	Purpose
+		run question executable located at path by using
+		 argvs_template, stdin_template, and stdout_template
+		if student's answer matches actual output
+			return true
+		else
+			return false
+	Preconditions
+		answers is a dictionary contains three sub-dictionaries
+		path is a string
+		argvs_template is a string
+		stdin_template is a string
+		stdout_template is a string
+	'''
+	argv = build_argvs(argvs_template,answer)
+	stdin = build_stdin(stdin_template,answer)
+	buggy_output = run_shell_command('cd '+path+';./faulty.sh '+argv,
+	 stdin)[0]
+	correct_output = run_shell_command('cd '+path+';./run.sh '+argv,
+	 stdin)[0]
+
+	return buggy_output != correct_output
+
+# generation helper functions #################################################
+
+# FIXME: "author" not quite the right name; need something that means "not an
+# execute hotspot for this h_tuple"
+def replace_author_hotspots(T,cell,h_tuple):
+	'''
+	purpose
+		replace hotspot in cell if it is not an input field
+	precondition
+		cell is a string
+		current tuple is a dict
+	'''
+	for k in T.get_hotspot_names():
+		if (type(h_tuple[k]) != list
+		 and h_tuple[k] != None
+		 and T.get_hotspot_type(k) != 'target'):
+			cell = cell.replace(k,str(h_tuple[k]))
+	return cell
+
+def replace_execute_hotspots(T,code,h_tuple):
+	'''
+	purpose
+		substitue code hotspots with global variables
+	'''
+	source_language = T.get_source_language()
+	L = T.get_hotspot_names()
+	L.sort()
+	arg_count = 1
+	for k in L:
+		if not k in code:
+			continue
+		if type(h_tuple[k]) == list or h_tuple[k] == None:
+			code = code.replace(k,source_language.argv+str(arg_count))
+			arg_count += 1
+	return code
+
+def generate_variable_declaration(T,h_tuple):
+	source_language = T.get_source_language()
+	s = ''
+	arg_count = 1
+	L = T.get_hotspot_names()
+	L.sort()
+	for k in L:
+		if not k in T.get_global_execute_code()+\
+		 T.get_main_execute_code():
+			continue
+		if type(h_tuple[k]) == list or h_tuple[k] == None:
+			s += source_language.declare_var(
+			 T.get_hotspot_type(k),'ca_argv_'+str(arg_count))
+			arg_count += 1
+
+	# declare a list/array for all target flags
+	if T.get_question_type() == 'bullseye':
+		arg_count = 0
+		for k in L:
+			if T.get_hotspot_type(k) == 'target' and h_tuple[k]:
+				arg_count += 1
+		s += source_language.declare_be_targets(arg_count)
+	return s
+
+def generate_assign_argvs(T,h_tuple):
+	source_language = T.get_source_language()
+	# calculate total number of hotspots in global code and main code
+	L = T.get_hotspot_names()
+	L.sort()
+	num_hotspots = 0
+	hotspots = []
+	for k in L:
+		if type(h_tuple[k]) == list or h_tuple[k] == None:
+			if k in T.get_global_execute_code()+\
+			 T.get_main_execute_code():
+				hotspots.append(k)
+				num_hotspots += 1
+	# assign the value of argv[N] to corresponding global variable
+	arg_count = 0
+	s = ''
+	for k in hotspots:
+		if T.get_hotspot_type(k) == 'int':
+			s += source_language.assign(source_language.argv+\
+			 str(arg_count+1),source_language.stoi(
+			 source_language.argv_ref(source_language.argc+'-'\
+			 +str(num_hotspots)+'+'+str(arg_count))))
+		elif T.get_hotspot_type(k) == 'float':
+			s += source_language.assign(source_language.argv+\
+			 str(arg_count+1),source_language.stof(
+			 source_language.argv_ref(source_language.argc+'-'\
+			 +str(num_hotspots)+'+'+str(arg_count))))
+		else:
+			s += source_language.assign(source_language.argv+\
+			 str(arg_count+1),source_language.argv_ref(
+			 source_language.argc+'-'+str(num_hotspots)+'+'+\
+			 str(arg_count)))
+		arg_count += 1
+	return s
+
+def set_be_targets(T,S,h_tuple):
+	'''
+	purpose
+                replaces active bullseye targets with set flag code
+                replaces inactive bullseye targets with empty string
+        precondition
+                S is a string
+                tuple is a dictionary of hotspot-value pairs
+	'''
+	source_language = T.get_source_language()
+	count = 0
+	for k in T.get_hotspot_names():
+		if T.get_hotspot_type(k) == 'target':
+			if h_tuple[k]:
+				S = S.replace(k,source_language.set_bullseye(
+				 k,S,count))
+				count += 1
+			else:
+				S = S.replace(k,'')
+	return S
+
+def highlight_be_targets(T,S,h_tuple):
+	'''
+	purpose
+                replaces active bullseye targets with 'CA_HIGHLIGHT'
+                replaces inactive bullseye targets with empty string
+        precondition
+                S is a string
+                tuple is a dictionary of hotspot-value pairs
+	'''
+	for k in T.get_hotspot_names():
+		if T.get_hotspot_type(k) == 'target':
+			if h_tuple[k]:
+				S = S.replace(k,'ca_highlight')
+			else:
+				S = S.replace(k,'')
+	return S

@@ -1,0 +1,154 @@
+Low priority / might already be fixed
+================================================================================
+
+crc: preserve input on check answer
+
+Recheck this in cqg (I think in codeact answer checking):
+	#FIXME: no re checking on substituted values?
+	#try running arbitrary commmand through here
+	#...yep, arbitrary commands can run. e.g. "; touch /tmp/foo"
+	#creates /tmp/foo. this is a serious problem, as it can be used
+	#to gain full shell access on the server (e.g. by doing something
+	#like "; pkill python; nc -l -p 8080 | bash")
+
+- improved quiz spec loading for cqg: use reload(__import__()) instead of
+  __import__() by itself
+
+- quiz specs should only be loaded from quizzes dir (disallow path chars in
+  url?)
+
+- experiment with codeact subprocess timeout methods
+
+- testing: rename 'answer_checks_semantic' to something more general, since the
+  logfile test script is also in here
+
+- testing: logging diff-er needs to not be sensitive to changes in absolute
+  path of the question. also a problem for visual diff when a log file fails
+  check. better yet, change logging (and all of cqg) to work only with relative
+  paths if possible.
+
+- FIXMEs in code (added in cqg_1.23 -- check these against current, if they've
+  been inadvertently removed.)
+
+- tweak log_dir in quiz specs (the last author-facing pathname?) so that it's
+  relative to cqg base, not web2py, since authors don't need to be doing path
+  math from there
+
+- consider using these in cqg question html, and in generate_tests:
+  http://docs.python.org/library/string.html#template-strings
+
+- a quiz spec called 'test.py' will always fail with weird errors because this
+  conflicts with an existing python module. a fix is demonstrated in
+  quiz_spec_gui_model.py -- use sys.path.insert(0,quiz_specifications) instead
+  of sys.path.append(), so that the quiz spec gets first priority. look for
+  sys.path.append elsewhere in code and do the same thing. also, sys.path
+  should be reset after screwing with it this way.
+
+- time recording vulnerability on marked quiz: if a student stares at a
+  question for half an hour, then hits next, previous, submit answer, the time
+  will be recorded as 1 or 2 seconds
+
+- should have proper error messages for "no questions found for quiz" and "no
+  such quiz", rather than letting web2py fail
+
+- bin/mark_* scripts are all broken and out of date
+
+- CQG layout: pressing enter doesn't hit "check answer"
+
+- code cell appears to sort its fields alphabetically in i/o questions. try
+  making a question with $x2 before $x1 in code cell -- always wrong?
+
+- check: are quoted strings handled correctly in stdin, or are we splitting on
+  all whitespace?
+
+- listbox doesn't work yet
+
+- argv regexp validation occurs too early & on wrong values. makes test_c_ll_0
+  always incorrect.
+
+- formatting glitch in test_c_ll_0
+
+- question generation masks c coding bugs (not using -Wall)
+
+- the generate scripts are still cwd-dependent
+
+- the generate scripts don't like spaces in abspath (even if we don't support
+  spaces in path; should only care about dirs below codeAct/; e.g. the
+  gen_ca.py script doesn't have this bug)
+
+- "import sys" is required for every python be & ff question, so it should be
+  added by generate
+
+- python: "SyntaxWarning: name 'ca_target_0' is assigned to before global
+  declaration" in test_python_be
+
+- "assert" display handling in python inserts semicolons at end of line?
+
+- generator includes fields that are not used in a particular question, e.g.
+  because they are set to fixed values.  this needs to be handled carefully for
+  list types, because in that case a fixed value is a list of possible answers
+  and it *will* be an HTML field.
+
+- when old sessions are left from previous server run, sometimes the variables
+  don't get replaced in HTML (e.g. arithmetic addition)
+
+- java questions: add support for "throws" on main method, so that author can
+  avoid having to do exception handling? (see test_java_be.py)
+
+- indenting in java questions -- requires one extra level, but should it?
+
+- my_check_answer() in codeact could be simplified, e.g. this from hamming.py:
+	 def get_input_element_ids(self):
+		 return hamming.get_input_element_ids(self) + ["value"]
+	(call to superclass version of get_input_element_ids())
+
+- generate.py gives a cryptic error when the game type is incorrect for the
+  content of the template (e.g. a file that contains dxX lines but with
+  game_type = 'input_output')
+
+- Does the highlighting code (for bullseye questions) still need to be checked;
+  i.e., is it still doing unexpected things with line breaks?  (Note: the
+  highlight code was changed at some point, so there are two possible
+  implementations to look at -- I think it's the latter one that was active
+  when we noticed the line break problem.)
+
+- The disabled previous/next buttons only being disabled in Firefox bug is
+  still present (just need to remove four quotation marks from
+  ca_question_HTML.py). Also, this bug occurs in Firefox 4 too; the buttons are
+  only correctly disabled in Firefox 3.
+
+- The os.chdir() bug appears to be completely fixed (there were no
+  problems in lab 2). However, we still need to test codeAct's behaviour
+  when two or more students are taking a quiz and the following occurs in
+  one student's session:
+   A question which misbehaves by segfaulting
+   A question which misbehaves by hanging / going into an infinite loop
+   A question which spews out a large amount of unexpected output
+  Specifically, I want to see whether other users' marks are affected or
+  whether anyone sees error screens.
+
+- Possible bug in codeAct (look in quiz path globbing) may result in a
+  student getting two copies of the same question at different indeces.
+  For example, see log file for tmather in Summer 2011 lab 4 marked quiz.
+
+- Check other utilities in bin/ directory for dependence on working directory
+  (fix is to use
+  cd "`dirname "$0"`"
+  )
+
+- Here's something that's just come up again - when a student reports a problem
+  with a codeAct question, I often have trouble working out exactly which one
+  it is.
+  The simplest solution would be to put the name of the question on the HTML
+  display in some way, so that students could just tell me, "something_py_0 has
+  a problem". That might help students build up a table of memorized answers by
+  question ID, though.
+  An alternative would be to identify the questions with a changing value (a
+  short random string), which is then logged on the server side so we can find
+  the corresponding question, but with the same identifier never used twice
+  from the students' point of view.
+
+- More detailed "Incorrect" messages (e.g. if there was a type error, say that
+  there was a type error and which field it was on).
+
+=================================== - EOF - ===================================

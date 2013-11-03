@@ -1,0 +1,225 @@
+import os
+import file_util
+import html_util
+import crypto_util
+
+class crypto:
+	def __init__(self,question_library_path,question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(os.path.join(
+		 question_library_path,question_path,'cqg_config.py'))
+
+		self.plain_text = config.plain_text
+		self.plain_text_list = [n for n in config.plain_text]
+		self.key = config.key
+		self.hotspots = config.cipher_text
+
+	def get_question_library_path(self):
+		return self.question_library_path
+	
+	def get_question_path(self):
+		return self.question_path
+
+	def get_css(self):
+		return '''\
+
+
+
+class substitution(crypto):
+	def __init__(self,question_library_path,question_path):
+		crypto.__init__(self,question_library_path,question_path)
+		self.cipher_text = crypto_util.get_cipher_substitition(
+		 self.plain_text,self.key)
+		self.cipher_text_list = [n for n in self.cipher_text]
+
+		self.alphabet_letters = crypto_util.get_alphabet_letters()
+
+	def get_html(self,answer):
+		html = '''<style type='text/css'>''' + \
+		html_util.make_css_borders(1) + \
+		'''
+		</style>
+		'''
+		html += '<p>Use a <b>substitution</b> cipher with the key '+\
+		 'shown to encrypt the plain text.</p>'
+
+		# generate the 1st table
+		html += '<center>'
+		html += html_util.get_table(
+		[
+		 ['&nbsp;'] + [('<tt>'+n+'</tt>','left_border') \
+		  for n in self.alphabet_letters],
+		 [('key','top_border')] + \
+		  [('<tt>'+n+'</tt>','left_border top_border') \
+		   for n in self.key]
+		],
+		'cellspacing="0"')
+		html += '</center>'
+		html += '</br></br>'
+
+		# generate the 2nd table 
+		for i in self.hotspots:
+			element_id = 'char_'+str(i)
+			if answer[element_id] == None:
+				value = ''
+			else:
+				value = answer[element_id]
+			self.cipher_text_list[i] = html_util.get_text(
+			 element_id,value,size=1)
+		html += '<center>'
+		html += html_util.get_table([
+		 ['plain text']+\
+		  [('<tt>'+n+'</tt>','left_border') \
+		   for n in self.plain_text_list],
+		 [('cipher text','top_border')]+\
+		  [('<tt>'+n+'</tt>','top_border left_border') \
+		   for n in self.cipher_text_list]
+		 ],'cellspacing=0')
+		html += '</center>'
+
+		return html
+
+	def get_input_element_ids(self):
+		ids = []
+		for i in self.hotspots:
+			ids.append('char_'+str(i))
+		return ids
+
+	def check_answer(self,answer):
+		# get stduent's answer
+		student_anwser_list = self.cipher_text_list[:]
+		for i in self.hotspots:
+			student_anwser_list[i] = answer['char_'+str(i)]
+		student_answer = ''
+		for ch in student_anwser_list:
+			student_answer += ch
+		
+		# compare
+		return student_answer == self.cipher_text
+
+class caesar(crypto):
+	def __init__(self,question_library_path,question_path):
+		crypto.__init__(self,question_library_path,question_path)
+		self.cipher_text = crypto_util.get_cipher_caesar(
+		 self.plain_text,self.key)
+		self.cipher_text_list = [n for n in self.cipher_text]
+
+	def get_html(self,answer):
+		html = '''<style type='text/css'>''' + \
+		html_util.make_css_borders(1) + \
+		'''
+		</style>
+		'''
+		html += '<p>Use a <b>caesar</b> cipher with key '+\
+		 str(self.key)+' to encrypt the plain text.</p>'
+	
+		for i in self.hotspots:
+			element_id = 'char_'+str(i)
+			if answer[element_id] == None:
+				value = ''
+			else:
+				value = answer[element_id]
+			self.cipher_text_list[i] = html_util.get_text(
+			 element_id,value,size=1)
+		html += '<center>'
+		html += html_util.get_table([
+		 [('plain text','bottom_border')]+\
+		  ['<tt>'+n+'</tt>' for n in self.plain_text_list],
+		 [('cipher text','bottom_border')]+\
+		  ['<tt>'+n+'</tt>' for n in self.cipher_text_list]
+		 ],'cellspacing=0')
+		html += '</center>'
+		return html
+	
+	def get_input_element_ids(self):
+		ids = []
+		for i in self.hotspots:
+			ids.append('char_'+str(i))
+		return ids
+
+	def check_answer(self,answer):
+		# get stduent's answer
+		student_anwser_list = self.cipher_text_list[:]
+		for i in self.hotspots:
+			student_anwser_list[i] = answer['char_'+str(i)]
+		student_answer = ''
+		for ch in student_anwser_list:
+			student_answer += ch
+		
+		# compare
+		return student_answer == self.cipher_text
+
+class vernam(crypto):
+	def __init__(self,question_library_path,question_path):
+		crypto.__init__(self,question_library_path,question_path)
+		self.alphabet_numbers = range(10)+range(10)+range(6)
+		self.alphabet_letters = crypto_util.get_alphabet_letters()
+
+		self.cipher_text = crypto_util.get_cipher_vernam(
+		 self.plain_text,self.key)
+		self.cipher_text_list = [n for n in self.cipher_text]
+
+	def get_html(self,answer):
+		html = '''<style type='text/css'>''' + \
+		html_util.make_css_borders(1) + \
+		'''
+		</style>
+		'''
+		html += '<p>Use a <b>vernam</b> cipher with the given key '+\
+		 ' to encrypt the plain text.</p>'
+
+		# generate the 1st table
+		html += '<center>'
+		html += html_util.get_table(
+		[
+		 ['<tt>'+n+'</tt>' for n in self.alphabet_letters],
+		 ['<tt>'+str(n)+'</tt>' for n in self.alphabet_numbers],
+		],
+		'cellspacing="0"')
+		html += '</center>'
+		html += '</br></br>'
+
+		# generate the 2nd table	
+		for i in self.hotspots:
+			element_id = 'char_'+str(i)
+			if answer[element_id] == None:
+				value = ''
+			else:
+				value = answer[element_id]
+			self.cipher_text_list[i] = html_util.get_text(
+			 element_id,value,size=1)
+		html += '<center>'
+		html += html_util.get_table([
+		 [('key','bottom_border')]+\
+		  ['<tt>'+str(n)+'</tt>' for n in self.key],
+		 [('plain text','bottom_border')]+\
+		  ['<tt>'+n+'</tt>' for n in self.plain_text_list],
+		 [('cipher text','bottom_border')]+\
+		  ['<tt>'+n+'</tt>' for n in self.cipher_text_list]
+		 ],'cellspacing=0')
+		html += '</center>'
+		return html
+	
+	def get_input_element_ids(self):
+		ids = []
+		for i in self.hotspots:
+			ids.append('char_'+str(i))
+		return ids
+
+	def check_answer(self,answer):
+		# get stduent's answer
+		student_anwser_list = self.cipher_text_list[:]
+		for i in self.hotspots:
+			student_anwser_list[i] = answer['char_'+str(i)]
+		student_answer = ''
+		for ch in student_anwser_list:
+			student_answer += ch
+		
+		# compare
+		return student_answer == self.cipher_text
+
+CSS_STRING = '''\
+
+
+'''

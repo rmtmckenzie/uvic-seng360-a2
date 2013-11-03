@@ -1,0 +1,168 @@
+import file_util
+import string
+
+class Template:
+        def __init__(self,template_file):
+                '''
+                purpose
+                        import template_file
+                precondition
+                        template_file passes template_verifier
+                '''
+		self.T = file_util.dynamic_import(template_file)
+		self.h_declarations_dict = dict(self.T.hotspot_declarations)
+		self.src_lan = file_util.dynamic_import(
+		 'code_activator_generate_'+self.T.source_language)
+
+        def get_hotspot_names(self):
+		'''
+		purpose
+			return a list of hotspot names
+		precondition
+			None
+		'''
+		return [i[0] for i in self.T.hotspot_declarations]
+
+        def get_hotspot_type(self,hotspot_name):
+		'''
+		purpose
+			return the type of hotspot as a string
+		precondition
+			hotspot_name is in get_hotspot_names()
+		'''
+		return self.h_declarations_dict[hotspot_name]
+		
+
+        def get_h_tuple_dicts(self):
+                '''
+                purpose
+			return a list of tuples
+			each tuple is contains hotspot name-value pairs
+                precondition
+                        None
+                '''
+		tuple_dic_list = [ ]
+		for i in range(len(self.T.group_list)):
+			group = self.T.group_list[i]
+			# loop through each tuple in a group
+			for j in range(1,len(group)):
+				dic = { }
+				current_tuple = group[j]
+				# loop through each hotspot value
+				for (n,p) in enumerate(
+				 self.T.hotspot_declarations):
+					dic[p[0]] = current_tuple[n]
+					dic['question'] = group[0]+str(j-1)
+				tuple_dic_list.append(dic)
+		return tuple_dic_list
+
+        def get_question_type(self):
+		'''
+		purpose
+			return question type as a string
+		precondition
+			None
+		'''
+		return self.T.question_type
+
+        def get_source_language(self):
+                '''
+                purpose
+                        returns reference to source_language module
+                precondition
+                        None
+                '''
+		return self.src_lan
+
+        def get_argv(self):
+		'''
+                purpose
+                        return a string containing the argv with
+			no hotspot replaced
+                precondition
+                        None
+                '''
+                return self.T.argv_template
+
+        def get_stdin(self):
+                '''
+                purpose
+                        return a string containing the stdin with
+			no hotspot replaced
+                precondition
+                        None
+                '''
+                return self.T.stdin_template
+
+        def get_stdout(self):
+		'''
+                purpose
+                        return a string containing the stdout with
+			no hotspot replaced
+                precondition
+                        None
+                '''
+		if 'stdout_template' in dir(self.T):
+			return self.T.stdout_template
+		else:
+			return ''
+
+	def get_class_name(self):
+		'''
+		purpose
+			return the class name as a string
+			return None if there is no class_name in template
+		precondition
+			None
+		'''
+		if 'public_class_name' in dir(self.T):
+			return self.T.public_class_name
+		else:
+			return None
+
+	def extract_dxX(self,prefixed_code,p):
+		'''
+		purpose
+			return the lines which contains p in prefix
+		precondition
+			prefixed_code is a string
+			p is a string of length 1
+		'''
+		s = ''
+		for line in prefixed_code.split('\n'):
+			# handle empty lines
+			if line == '':
+				continue
+
+			# split line into prefix and content
+			prefix = ''
+			for n in range(len(line)):
+				if line[n] in string.whitespace:
+					prefix = line[:n]
+					break
+			if prefix == '':
+				prefix = line
+			content = line[n+1:]
+
+			if p in prefix:
+				s += content+'\n'
+		return s
+
+        def get_global_display_code(self):
+		return self.extract_dxX(self.T.global_code_template,'d')
+
+        def get_global_execute_code(self):
+		return self.extract_dxX(self.T.global_code_template,'x')
+
+        def get_global_faulty_code(self):
+		return self.extract_dxX(self.T.global_code_template,'X')
+
+        def get_main_display_code(self):
+		return self.extract_dxX(self.T.main_code_template,'d')
+
+        def get_main_execute_code(self):
+		return self.extract_dxX(self.T.main_code_template,'x')
+
+        def get_main_faulty_code(self):
+		return self.extract_dxX(self.T.main_code_template,'X')
+

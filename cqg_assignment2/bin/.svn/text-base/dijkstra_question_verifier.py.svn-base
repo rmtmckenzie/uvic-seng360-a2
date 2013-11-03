@@ -1,0 +1,150 @@
+#!/usr/bin/python
+
+import sys
+import verify_util
+import dijkstra_util
+
+# list of verification identifier/condition pairs
+condition_list = [
+	['variables_defined',
+		"product_family, question_type, graph, source, "
+		"dest, iterations, table_hotspots are defined"],
+	['product_family',
+		"product_family is 'dijkstra'"],
+	['question_type',
+		"question_type is 'dijkstra'"],
+	['graph_type',
+		"graph must be a dictionary of dictionaries"],
+	['outer_keys',
+		"all keys in graph must be in [A..L]"],
+	['inner_keys',
+		"all keys in subdictionaries in graph must be in [A..L]"],
+	['inner_values',
+		"all values in subdictionaries in graph are non-negative ints"],
+	['edges',
+		"edges in graph are a subset of (AB, BC, CD, "
+		 "AE, BF, CG, DH, EF, FG, GH, EI, FJ, GK, HL, IJ, JK, KL)"],
+	['source_dest',
+		"source and dest are nodes in graph"],
+	['iterations',
+		"iterations must be an int in [1..number of iterations at "
+		"which dijkstra's algorithm terminates]"],
+	['table_hotspots_type',
+		"table_hotspots must be a list of lists [str,int]"],
+	['table_hotspots_nodes',
+		"each str in sublists of table_hotspots is a node in graph"],
+	['table_hotspots_iterations',
+		"each int in sublists of table_hotspots is in "
+		"range(iterations)"],
+	['deterministic',
+		"the choice of next working node during dijkstra's algorithm "
+		"must always be unambiguous"],
+]
+
+def check_graph(graph):
+	'''
+	purpose
+		checks that graph satisfies the requirements described by
+		'graph_type','outer_keys','inner_keys','inner_values','edges'
+		in condition_list.
+		returns None if the graph satisfies all five requirements,
+		or one of the above strings otherwise
+	precondition
+		none
+	'''
+	if not (type(graph) is dict):
+		return 'graph_type'
+	for outer_key in graph:
+		if not (type(graph[outer_key]) is dict):
+			return 'graph_type'
+
+		if not (outer_key in dijkstra_util.ALLOWED_NODES):
+			return 'outer_keys'
+
+		for inner_key in graph[outer_key]:
+			if not (inner_key in dijkstra_util.ALLOWED_NODES):
+				return 'inner_keys'
+
+			if not (type(graph[outer_key][inner_key]) is int
+			 and graph[outer_key][inner_key] >= 0):
+				return 'inner_values'
+	
+			if not ((outer_key+inner_key)
+			 in dijkstra_util.ALLOWED_EDGES
+			 or (inner_key+outer_key)
+			 in dijkstra_util.ALLOWED_EDGES):
+				return 'edges'
+
+def verify_conditions(question_directory,config,condition_list):
+	conditions_dictionary = dict(condition_list)
+
+	for v in ['product_family', 'question_type', 'graph', 'source',
+	 'dest', 'iterations', 'table_hotspots']:
+		if not (v in dir(config)):
+			return conditions_dictionary['variables_defined']
+	
+	if not (config.product_family == 'dijkstra'):
+		return conditions_dictionary['product_family']
+	
+	if not (config.question_type == 'dijkstra'):
+		return conditions_dictionary['question_type']
+
+	error = check_graph(config.graph)
+	if error is not None:
+		return conditions_dictionary[error]
+	
+	# nodes list used for checking source, dest, table_hotspots
+	nodes = dijkstra_util.get_nodes(config.graph)
+	
+	if not (config.source in nodes and config.dest in nodes):
+		return conditions_dictionary['source_dest'] 
+	
+	# instantiate graph & run dijkstra
+	graph_obj = dijkstra_util.w_graph(config.graph)
+	dijkstra_result = graph_obj.dijkstra(config.source,config.dest)
+
+	if not (type(config.iterations) is int and
+	 (1 <= config.iterations <= len(dijkstra_result))):
+		return conditions_dictionary['iterations']
+
+	if not (type(config.table_hotspots) is list):
+		return conditions_dictionary['table_hotspots_type']
+	for hotspot in config.table_hotspots:
+		if not (type(hotspot) is list):
+			return conditions_dictionary['table_hotspots_type']
+		if not (type(hotspot[0]) is str and type(hotspot[1]) is int):
+			return conditions_dictionary['table_hotspots_type']
+
+		if not (hotspot[0] in nodes):
+			return conditions_dictionary['table_hotspots_nodes']
+
+		if not (hotspot[1] in range(len(dijkstra_result))):
+			return conditions_dictionary[
+			 'table_hotspots_iterations']
+	
+	iteration = 0
+	#FIXME: possible false positive in a case like, e.g., weights:
+	# A: 1, B: 2, C: 3
+	# then later a new route is found and B is decreased to 1
+	# ...can this happen? if so, need a deeper hook into dijkstra so
+	# that we can know what's in the permanent set and ignore it.
+	for row in dijkstra_result:
+		# if there is more than one occurrence of minimum weight
+		del row[config.source] # remove 0 value for source node
+		if (row.values().count(min(row.values())) > 1):
+			return conditions_dictionary['deterministic'] + \
+			 "\nambiguous choice of next node in iteration " +\
+			 str(iteration) + "; weights at this point:\n" +\
+			 str(row)
+		iteration += 1
+
+# handle invocation from command line
+if __name__ == '__main__':
+	n = verify_util.question_verifier_main(sys.argv,
+         'Question Type dijkstra: Question Verification Conditions',
+         condition_list,verify_conditions)
+
+        if n == verify_util.COMMAND_LINE_SYNTAX_FAILURE:
+                print 'Usage: dijkstra_question_verifier.py [question_directory]'
+
+        sys.exit(n)

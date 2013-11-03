@@ -1,0 +1,85 @@
+<html>
+<head>
+</head>
+<title>Generic Verification Process for Question Type <i>T</i></title>
+</head>
+
+<h2>Generic Verification Process for Question Type <i>T</i></h2>
+This document specifies the testing and review process for
+for each question type <i>T</i> in the CQG system.
+One of the main goals of the question type test and review process is to 
+eliminate server crashes, especially those caused by dereferencing errors.
+
+<h2>File Inventory Check</h2>
+Check that each file specified in the
+<a href="question_type_file_inventory.html">Question Type File Inventory</a>
+is present for <i>T</i>.
+
+<h2>Test Process</h2>
+Except for starting and stopping the server,
+perform the following tasks from the directory
+<tt>testing_review/<i>T</i></tt>.
+<dl>
+<dt>Start the server<dd>
+Start the server by running
+<pre>
+	$ ./web2py/start.sh
+</pre>
+
+<dt>Setup<dd>
+Generate/install the test questions and quizzes:
+<pre>
+	$ python install_tests.py
+</pre>
+
+<dt>Template verifier<dd>
+Test <i>T</i><tt>_template_verifier.py</tt>
+against at least one correct and one incorrect template.
+To guarantee that each condition is executed at least once,
+ensure that there is an incorrect template in which
+only the last condition fails.
+
+<dt>Functional testing<dd>
+Execute the functional tests in <tt>function_tests.py</tt>.
+
+<dt>Manual GUI testing<dd>
+Run the tests specified in <i>T</i><tt>/manual_gui_test_plan.txt</tt>,
+recording the results in <i>T</i><tt>/manual_gui_test_report_YYMMDD.txt</tt>.
+Indicate passed tests with 'P' and failed tests with 'F'.
+For each failed test, provide enough information to replicate the failure.
+
+<dt>Automated GUI testing<dd>
+Execute the automated GUI tests using Selenium:
+<pre>
+Start Selenium
+	Tools | Selenium IDE
+Start test execution
+	File | Open ...
+		enter: <tt>cqg/testing_review/<i>T</i>/selenium_test_suite.html</tt>
+	click '>=' button to play entire test suite
+		check Test Case column for failures
+</pre>
+
+<dt>Takedown<dd>
+Uninstall the test questions and quizzes:
+<pre>
+	$ python uninstall_tests.py
+</pre>
+
+<dt>Stop the server<dd>
+Stop the server.
+</dl>
+
+<h2>Review Process</h2>
+<dl>
+<dt><i>T</i><tt>.py</tt><dd>
+Check that every string, list, tuple, and dictionary dereference is
+guaranteed to be legal.
+
+<dt><i>T</i><tt>_util.py</tt><dd>
+Check that every string, list, tuple, and dictionary dereference is
+guaranteed to be legal.
+
+</dl>
+
+</html>

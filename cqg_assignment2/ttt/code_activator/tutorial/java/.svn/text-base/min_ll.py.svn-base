@@ -1,0 +1,36 @@
+question_type = 'liar_liar'
+source_language = 'java'
+public_class_name = 'Min'
+
+parameter_list = [
+	['$t0','assert'],['$t1','assert'],['$x1','int'],['$x2','int']
+]
+
+tuple_list = [
+	['java_min_ll_',
+		['a > 5','',None,None],
+		['','b < 6',None,None],
+		['','b < 6',None,7],
+	]
+]
+
+global_code_template = ''
+
+main_code_template = '''\
+dx			int a,b;
+dx			a = $x1;
+dx			b = $x2;
+dx			if (a < b) {
+dx				$t0
+dx				System.out.println(a);
+dx			} else {
+dx				$t1
+dx				System.out.println(b);
+dx			}
+'''
+
+argv_template = ''
+
+stdin_template = ''
+
+stdout_template = ''

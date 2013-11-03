@@ -1,0 +1,38 @@
+<html>
+<head>
+<title>Chapter 7. Expressions</title>
+</head>
+<body>
+
+<h1>Chapter 7. Expressions</h1>
+<dl>
+
+<dt>7.1 The structure and value of an expression<dd>
+<a href="../quiz?spec=eop/chapter7/abcd">
+Evaluate: <tt>a + ((b/d) - c)</tt></a>
+<br>
+<a href="../quiz?spec=eop/chapter7/uvwx">
+Evaluate: <tt>u+-v*u/w+x/v/u*x*-x</tt></a>
+<br>
+<a href="../quiz?spec=eop/chapter7/multiple_choice_7_1">Multiple choice</a>
+
+<dt>7.2 Arithmetic operations<dd>
+
+<dt>7.3 Boolean operations<dd>
+
+<dt>7.4 Expressions and statements<dd>
+
+<dt><a href="../quiz?spec=eop/chapter7/inc_dec">
+7.5 Increment and decrement operators<dd></a>
+
+<dt>7.6 The assignment statement is an expression statement<dd>
+
+<dt>7.7 Fused assignment operators<dd>
+
+<dt><a href="../quiz?spec=eop/chapter7/conditional_expression">
+7.8 Conditional expressions<dd></a>
+
+<dt>7.9 Operations on bit vectors<dd>
+
+</dl>
+<body><html>

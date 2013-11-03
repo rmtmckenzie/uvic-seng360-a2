@@ -1,0 +1,24 @@
+.vimrc
+	use the archived .vimrc
+V: tree promote/demote, delete/move/copy
+	v\n...\n: select multiple lines
+		or any cursor movement commands
+	>,<: promote,demote
+		repetition factor can precede >
+	d: delete selection
+expand/collapse
+	global
+		zR: expand (reveal) the entire file
+		zM: collapse (minimze) the entire file
+current tree
+	"current tree" is the tree---level 1 to all leaves---containing
+		the cursor, regardless of cursor position
+	zO: expand (open) the current tree
+		must be "inside" a tree, eg, not level 1
+	zC: collapse (close) the current tree
+		must be "inside" a tree, eg, not level 1
+main scenario
+	zI: turn on expand/collapse
+	move cursor to fold of tree of interest
+	zO: see all of current tree
+	zC: collapse current tree or zM: back to start

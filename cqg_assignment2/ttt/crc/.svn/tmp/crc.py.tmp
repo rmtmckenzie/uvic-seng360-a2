@@ -1,0 +1,150 @@
+<<<<<<< .mine
+import generate_util
+import crc_util
+
+def work_hotspots(divisor_len,message_len):
+	'''
+	purpose:
+		return a list containing all work hotspots
+	'''
+	return generate_util.cross_product \
+		([ range(crc_util.number_of_rows(divisor_len,message_len)), \
+		range(crc_util.row_width(divisor_len,message_len)) ])
+
+def raw_group(divisors,messages,work_hotspot_count):
+	'''
+	purpose
+		return a group with:
+			divisors: a list of divisors of the same length
+			messages: a list of messages of the same length
+			forward only: no divisor or dividend hotspots
+			quotient hotspots: [0,n], where n is last quotient index
+			remainder hotspots: [0,n], where n is last remainder index
+			work hotspots: all hotspot lists of length
+				hotspot_count
+	preconditions
+		divisors: non-empty list of bitstrings of length > 1
+			all divisors are the same length
+		messages: non-empty list of bitstrings of length >= d
+			all messages are the same length
+		work_hotspot_count: in
+		 [0..len(work_hotspots(len(divisors[0]),len(messages[0]))]
+	'''
+	d = len(divisors[0])
+	m = len(messages[0])
+	return [ 'crc_d%i_m%i_' % (d,m),
+	 [divisors, messages, [ ], [ ],
+	 [ [0], [crc_util.quotient_len(d,m)-1] ],
+	 [ [0], [crc_util.remainder_len(d,m)-1] ],
+	 generate_util.choose_k(work_hotspots(d,m),work_hotspot_count)] ]
+
+'''
+INPUT
+	0: divisors
+	1: messages
+	2: divisor hotspots
+	3: dividend hotspots
+OUTPUT
+	4: quotient hotspots: all single hotspots
+	5: remainder hotspots: all single hotspots
+	6: work hotspots
+'''
+cross_product_indexes = [0,1,4,5,6] # for forward questions
+
+=======
+>>>>>>> .r58
+<<<<<<< .mine
+d2_m2_count = 2 * 4 * 2 * 2 * generate_util.n_c_k(len(work_hotspots(2,2)),2)
+d4_m6_count = 2 * 2 * 2 * 2 * \
+	generate_util.n_c_k(len(work_hotspots(4,6)),2)
+print '***** expected number of questions:', d2_m2_count
+print '***** expected number of questions:', d4_m6_count
+=======
+md_pairs_0 = [
+	['10101011', '1000',],
+	['10101011', '1101',],
+	['10101011', '1111',],
+	['11101011', '1011',],
+	['11101011', '1001',],
+]
+>>>>>>> .r58
+
+<<<<<<< .mine
+raw_group_list = [
+	raw_group(['10','11'],['00','01','10','11'],2),
+	raw_group(['1000','1001'],['000000','000001'],2),
+=======
+hotspots_0 = [
+	[[], [], [1, 3, 4], [[3,1],[3,2]], [1,2]],
+	[[], [], [1, 3, 5], [[0,0],[1,0],[2,0],[3,0],[4,0]], [1,2]],
+>>>>>>> .r58
+]
+
+<<<<<<< .mine
+G = generate_util.Group_list(raw_group_list,7)
+G.cross_product(None,cross_product_indexes)
+group_list = G.group_list
+'''
+for g in group_list:
+	print g[0]
+	for h in g[1:]:
+		print '\t',h
+=======
+md_pairs_10 = [
+	['10', '10',],
+	['10', '11',],
+	['11', '10',],
+	['11', '11',],
+	['111', '10',],
+]
+
+hotspots_10 = [
+	[[], [], [0,1], [[0,0],[0,1]], [2]],
+	[[], [], [], [[0,0],[1,0],[2,1],[3,0]], [1,2]],
+]
+
+md_pairs_20 = [
+	['1000', '11',],
+	['1011', '10',],
+	['1100', '11',],
+	['1111', '10',],
+	['1110', '11',],
+]
+
+hotspots_20 = [
+	[[], [], [0,1], [[0,0],[0,1]], [2]],
+	[[], [], [], [[3,0],[4,1],[5,0],[6,1]], [1,2,4]],
+]
+
+md_pairs_30 = [
+	['1000001', '101',],
+	['1011111', '101',],
+	['1101101', '101',],
+	['1011111', '111',],
+	['1000000', '110',],
+]
+
+hotspots_30 = [
+	[[], [],
+	 [1, 3, 4], [[x,y] for x in range(1,5) for y in range(3)],
+	 [1,2]],
+	[[], [],
+	 [], [[x,y] for x in range(11,13) for y in range(3)] + [[13,0],[13,1]],
+	 range(9)],
+]
+
+def make_group_list(md_pairs,hotspots):
+	tuple_list = []
+	for p in md_pairs:
+		for h in hotspots:
+			tuple_list.append(p + h)
+	return tuple_list
+
+group_list = [
+	['crc'] +
+	 make_group_list(md_pairs_0,hotspots_0) +
+	 make_group_list(md_pairs_10,hotspots_10) +
+	 make_group_list(md_pairs_20,hotspots_20) +
+	 make_group_list(md_pairs_30,hotspots_30)
+]
+>>>>>>> .r58

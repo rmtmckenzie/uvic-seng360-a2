@@ -1,0 +1,50 @@
+<h2>Question template format: code_activator</h2>
+
+This document explains the syntax and semantics of the code_activator
+question template.
+<p>
+The required variables and the restrictions on their values
+are specified by the Template Verification Conditions.
+<p>
+The variable <tt>hotspot_declarations</tt>
+specifies the hotspots and their data types.
+Each hotspot name must appear exactly once
+in the <tt>*_template</tt> strings in the template.
+<p>
+The variable <tt>group_list</tt> must contain a list of groups
+where each group has the form:
+<p>
+[<i>group_name</i>, <i>hotspot_tuple_0</i>, <i>hotspot_tuple_1</i>, ...]
+<p>
+One question is generated for each hotspot tuple by
+replacing the hotspots with values from the tuple.
+The question generated from <i>hotspot_tuple_i</i> is stored in
+a directory with name constructed by appending <i>i</i>
+to <i>group_name</i>.
+<p>
+In the <tt>global_code_template</tt> and <tt>main_code_template</tt> variables,
+the letters <tt>d</tt> and <tt>x</tt> may appear at the start of the line,
+followed by a tab.
+When <tt>d</tt> is present, the code to the right of the
+tab will appear in the display cell.
+When <tt>x</tt> is present, the code to the right of the
+tab will appear in the executable code.
+<p>
+In <i>Bullseye</i> templates, one additional hotspot type is provided:
+<tt>target</tt>.
+When a hotspot with type <tt>target</tt> has value <tt>True</tt>, then
+<ul>
+<li>
+in the display code, the following the hotspot will be highlighted and
+<li>
+in the executable code, code will be inserted to determine if the
+line is executed at least once.
+</ul>
+<p>
+In <i>Find-the-failure</i> templates,
+the <tt>global_code_template</tt> and <tt>main_code_template</tt> variables
+may also contain an <tt>X</tt> prefix.
+When <tt>X</tt> is present, the code line to the right of the
+tab will appear in the faulty version of the executable code.
+When check answer is pressed, the correct and faulty versions are run
+and their outputs compared.

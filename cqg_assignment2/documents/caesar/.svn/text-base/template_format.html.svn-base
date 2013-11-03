@@ -1,0 +1,25 @@
+<h2>Question template format: caesar</h2>
+
+This document explains the syntax and semantics of the caesar
+question template.
+<p>
+The required variables and the restrictions on their values
+are specified by the Template Verification Conditions.
+<p>
+<p>
+The variable <tt>group_list</tt> must contain a list of groups, where
+each group has the form:
+<p>
+[<i>group_name</i>, <i>question_vector_0</i>, <i>question_vector_1</i>, ...]
+<p>
+and each question vector has the form:
+<pre>
+[<i>plaintext</i>, <i>key</i>,<i>hotspots</i>]
+</pre>
+One question is generated for each question vector.
+The question generated from <i>question_vector_i</i> is stored in a directory
+with name constructed by appending <i>i</i> to <i>group_name</i>.
+<p>
+<i>plaintext</i> is a string comprising only characters in [A-Z].
+<i>key</i> is a positive integer less than 26.
+<i>hotspots</i> is a list of indeces into plaintext (0-relative).

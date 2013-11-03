@@ -1,0 +1,52 @@
+def get_alphabet_letters():
+	L = [
+ 		'A','B','C','D','E',
+		'F','G','H','I','J',
+		'K','L','M','N','O',
+		'P','Q','R','S','T',
+		'U','V','W','X','Y',
+		'Z'
+	]
+	return L
+
+def get_cipher_substitition(plain_text,key):
+	# build plain text to cipher text map
+	key_map = {}
+	letters = get_alphabet_letters()
+	for i in range(len(letters)):
+		key_map[letters[i]] = key[i]
+
+	# translate plain text
+	cipher_text = ''
+	for ch in plain_text:
+		cipher_text += key_map[ch]
+
+	return cipher_text
+		
+def get_cipher_caesar(plain_text,key):
+	C = ''
+	letters = get_alphabet_letters()
+	for p in plain_text:
+		p_i = letters.index(p)
+		c_i = (p_i+key) % len(letters)
+		C += letters[c_i]
+	return C
+
+def get_cipher_vernam(plain_text,key):
+	'''
+	purpose
+		returns P encrypted with key N
+	preconditions
+		P is a string of [A..Z]
+		N is a list of ints at least as long as P
+	'''
+	C = ''
+	i = 0
+	letters = get_alphabet_letters()
+	for c in plain_text:
+		c_i = letters.index(c)
+		p_i = (c_i+key[i])%len(letters)
+		C += letters[p_i]
+		i += 1
+	return C
+

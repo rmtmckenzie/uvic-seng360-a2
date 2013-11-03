@@ -1,0 +1,60 @@
+<h2>Question template format: dijkstra</h2>
+
+This document explains the syntax and semantics of the dijkstra
+question template.
+<p>
+The required variables and the restrictions on their values
+are specified by the Template Verification Conditions.
+<p>
+The variable <tt>graph</tt> must contain a description of an undirected
+weighted graph whose node ids are in A..L and edges are in the set: <br />
+<blockquote>
+AB, BC, CD,<br />
+AE, BF, CG, DH,<br />
+EF, FG, GH,<br />
+EI, FJ, GK, HL,<br />
+IJ, JK, KL<br />
+</blockquote>
+<p>
+The value of <tt>graph</tt> must be of the following data type:
+<p>
+<dl
+<dt>syntax
+<dd>
+	a dictionary ("outer dictionary") where each key is a
+	node id and each value is a dictionary ("inner
+	dictionary") in which each key is a node id and each
+	value is an integer weight
+<dt>semantic constraints
+<dd>
+	each edge occurs at most once
+<dt>meaning
+<dd>
+	{A: {B: 5, E: 2}} means the w_graph with nodes A, B, E
+	and edges AB with weight 5 and AE with weight 2
+</dl>
+<p>
+The variable <tt>group_list</tt> must contain a list of groups, where
+each group has the form:
+<p>
+[<i>group_name</i>, <i>question_vector_0</i>, <i>question_vector_1</i>, ...]
+<p>
+One question is generated for each question vector.
+The question generated from <i>question_vector_i</i> is stored in a directory
+with name constructed by appending <i>i</i> to <i>group_name</i>.
+<p>
+Each question vector is a list of:
+<dl>
+<dt><i>source</i>
+<dd>The starting node
+<dt><i>dest</i>
+<dd>The destination node
+<dt><i>weight_overrides</i>
+<dd>A dictionary that is syntactically a slice of <i>graph</i>, but with
+different edge weight values
+<dt><i>iterations</i>
+<dd>the number of iterations of dijkstra's algorithm that will be displayed
+<dt><i>table_hotspots</i>
+<dd>a list of lists of length 2, where each sub-list has the form
+[<i>node</i>,<i>iteration</i>]. <i>iteration</i> is 0-relative.
+</dl>

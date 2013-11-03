@@ -1,0 +1,198 @@
+#!/usr/bin/python
+
+import sys
+import verify_util
+import crc_util
+
+# list of verification identifier/condition pairs
+condition_list = [
+	['group_list_defined',
+		"'group_list' must be defined"],
+	['group_list_type',
+		"'group_list' must be a list of lists of length at least 2"],
+	['group_types',
+		"In each group, item 0 is a string and the rest are lists"],
+	['prefix_unique',
+		"Each group's prefix string must be unique"],
+	['vector_types',
+		"Each vector in a group must be of length 7"],
+	['divisor_type',
+		"divisor is a non-empty string of '0' and '1'"],
+	['divisor_zero',
+		"divisor cannot begin with a '0'"],
+	['divisor_len',
+		"length of divisor must be in [2..length of message]"],
+	['message_type',
+		"message is a non-empty string of '0' and '1'"],
+	['divisor_hotspots',
+		"divisor_hotspots must be a list of distinct indeces into "
+		"divisor"],
+	['dividend_hotspots',
+		"dividend_hotspots must be a list of distinct indeces "
+		"into message with len(divisor)-1 0 bits appended"],
+	['quotient_hotspots',
+		"quotient_hotspots must be a list of distinct indeces into "
+		"quotient"],
+	['remainder_hotspots',
+		"remainder_hotspots must be a list of distinct indeces into "
+		"remainder"],
+	['rows_hotspots_type',
+		"rows_hotspots must be a list of distinct lists of 2 integers"],
+	['rows_hotspots_row',
+		"each sub-list[0] in rows_hotspots must be < "
+		"2*len(message) - 1"],
+	['rows_hotspots_col',
+		"each sub-list[1] in rows_hotspots must not exceed the "
+		"length of divisor"],
+]
+
+def is_distinct_index_list(length,indeces):
+	'''
+	purpose
+		returns true if indeces is a list of distinct indeces into
+		an indexable of length length, false otherwise
+	precondition
+		length is a positive int
+		indeces is a list of integers
+	'''
+	if not (type(indeces) is list):
+		return False
+	for i in indeces:
+		if not (type(i) is int):
+			return False
+	if not (len(set(indeces)) == len(indeces)):
+		return False
+	for i in indeces:
+		if not (i in range(length)):
+			return False
+	return True
+
+def verify_conditions(template,condition_list):
+	conditions_dictionary = dict(condition_list)
+
+	if not ('group_list' in dir(template)):
+		return conditions_dictionary['group_list_defined']
+
+	if not (type(template.group_list) is list):
+		return conditions_dictionary['group_list_type']
+	if not (len(template.group_list) > 0):
+		return conditions_dictionary['group_list_type']
+	for g in template.group_list:
+		if not (type(g) is list and len(g) >= 2):
+			return conditions_dictionary['group_list_type']
+
+	for g in template.group_list:
+		if not (type(g[0]) is str):
+			return conditions_dictionary['group_types'] +\
+			 '\n\tgroup: ' + str(g)
+		for i in g[1:]:
+			if not (type(i) is list):
+				return conditions_dictionary['group_types'] +\
+				 '\n\tgroup: ' + str(g)
+
+	if not (len(template.group_list) == \
+	 len(set([g[0] for g in template.group_list]))):
+		return conditions_dictionary['prefix_unique']
+
+	for group in template.group_list:
+		for q in group[1:]: # skip prefix string
+			if not (len(q) == 7):
+				return conditions_dictionary['vector_types'] +\
+				 '\n\tvector: ' + str(q)
+
+			(divisor, message, divisor_hotspots, dividend_hotspots,
+			 quotient_hotspots, remainder_hotspots, rows_hotspots) \
+			 = q
+			if not (type(divisor) == str and len(divisor) > 0):
+				return conditions_dictionary[
+				 'divisor_type'] + '\n\tvector: ' + str(q)
+			for character in divisor:
+				if not (character in ['0','1']):
+					return \
+					 conditions_dictionary[
+					  'divisor_type']+'\n\tvector: '+str(q)
+
+			if not (type(message) == str and len(message) > 0):
+				return conditions_dictionary[
+				 'message_type'] + '\n\tvector: ' + str(q)
+			for character in message:
+				if not (character in ['0','1']):
+					return conditions_dictionary[
+					 'message_type']+'\n\tvector: '+str(q)
+
+			if not (divisor[0] == '1'):
+				return conditions_dictionary[
+				 'divisor_zero'] + '\n\tvector: ' + str(q)
+			if not (len(divisor) >= 2 and 
+			 len(divisor) <= len(message)):
+				return conditions_dictionary[
+				 'divisor_len'] + '\n\tvector: ' + str(q)
+
+			if not is_distinct_index_list(
+			 len(divisor), divisor_hotspots):
+				return conditions_dictionary[
+				 'divisor_hotspots'] + '\n\tvector: ' + str(q)
+
+			if not is_distinct_index_list( crc_util.dividend_len(
+			 len(divisor),len(message)), dividend_hotspots):
+				return conditions_dictionary[
+				 'dividend_hotspots'] + '\n\tvector: ' + str(q)
+
+			if not is_distinct_index_list( crc_util.quotient_len(
+			 len(divisor),len(message)), quotient_hotspots):
+				return conditions_dictionary[
+				 'quotient_hotspots'] + '\n\tvector: ' + str(q)
+
+			if not is_distinct_index_list( crc_util.remainder_len(
+			 len(divisor),len(message)), remainder_hotspots):
+				return conditions_dictionary[
+				 'remainder_hotspots'] + '\n\tvector: ' + str(q)
+
+			# rows_hotspots
+			if not (type(rows_hotspots) is list):
+				return conditions_dictionary[
+				 'rows_hotspots_type'] + '\n\tvector: ' + str(q)
+			for s in rows_hotspots:
+				if not (type(s) is list):
+					return conditions_dictionary[
+					 'rows_hotspots_type'] \
+					 + '\n\tvector: ' + str(q)
+			for s in rows_hotspots:
+				if not (len(s) == 2):
+					return conditions_dictionary[
+					 'rows_hotspots_type'] \
+					 + '\n\tvector: ' + str(q)
+				for i in s:
+					if not (type(i) is int):
+						return conditions_dictionary[
+						 'rows_hotspots_type'] \
+						 + '\n\tvector: ' + str(q)
+			# uniqueness check: need to cast to tuple because list
+			# not hashable (i.e. cannot set() a list of lists).
+			if not (len(rows_hotspots) ==
+				 len(set([tuple(s) for s in rows_hotspots]))):
+				return conditions_dictionary[
+				 'rows_hotspots_type'] + '\n\tvector: ' + str(q)
+			for s in rows_hotspots:
+				if not (s[0] in range( crc_util.number_of_rows(
+				 len(divisor),len(message)))):
+					return conditions_dictionary[
+					 'rows_hotspots_row'] \
+					 + '\n\tvector: ' + str(q)
+			for s in rows_hotspots:
+				if not (s[1] in range( crc_util.row_width(
+				 len(divisor),len(message)))):
+					return conditions_dictionary[
+					 'rows_hotspots_col'] \
+					 + '\n\tvector: ' + str(q)
+
+# handle invocation from command line
+if __name__ == '__main__':
+	n = verify_util.template_verifier_main(sys.argv,
+         'Question Type crc: Template Verification Conditions',
+         condition_list,verify_conditions)
+
+        if n == verify_util.COMMAND_LINE_SYNTAX_FAILURE:
+                print 'Usage: crc_template_verifier.py [template_file]'
+
+        sys.exit(n)

@@ -1,0 +1,50 @@
+1. error in generating test_c_io:
+	/home/wanghy/Desktop/cqg/question_library/code_activator/testing/test_c_io_0/execute.c: In function ‘main’:
+	/home/wanghy/Desktop/cqg/question_library/code_activator/testing/test_c_io_0/execute.c:5:24: error: expected expression before ‘[’ token
+
+2. error in generating test_java_io:
+	Test.java:3: illegal start of expression
+			System.out.println("stdout "+[1, 2, 3]);
+						     ^
+	Test.java:3: ';' expected
+			System.out.println("stdout "+[1, 2, 3]);
+						      ^
+	Test.java:3: illegal start of expression
+			System.out.println("stdout "+[1, 2, 3]);
+						       ^
+	Test.java:3: ';' expected
+			System.out.println("stdout "+[1, 2, 3]);
+							^
+	Test.java:3: illegal start of expression
+			System.out.println("stdout "+[1, 2, 3]);
+							  ^
+	Test.java:3: ';' expected
+			System.out.println("stdout "+[1, 2, 3]);
+							   ^
+	Test.java:3: illegal start of expression
+			System.out.println("stdout "+[1, 2, 3]);
+							     ^
+	Test.java:3: ';' expected
+			System.out.println("stdout "+[1, 2, 3]);
+							      ^
+	8 errors
+
+3. failed c_io_correct Selenium test case:
+	[error] Actual value 'Incorrect' did not match 'Correct'
+
+4. failed java_io_correct Selenium test case:
+	[error] Actual value 'Incorrect' did not match 'Correct'
+
+5. failed python_io_correct Selenium test case:
+	[error] Actual value 'Incorrect' did not match 'Correct'
+
+6. failed log_file_test Selenium test case:
+	[error] Element name=username not found
+
+7. errors in code activator's manual test cases:
+	a. line 28 in testing_review/code_activator/manual_test_plan.txt should
+	 be:
+		python testing_review/code_activator/generate_tests.py
+	b. in 'test_c_io', the code cell does not contain one listbox as the
+	 last argument to printf.
+	c. quiz 'test_multi' does not exist.

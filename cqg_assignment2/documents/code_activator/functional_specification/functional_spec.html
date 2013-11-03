@@ -1,0 +1,582 @@
+<html>
+<head>
+<title>Code Activator Functional Specification</title>
+<style type="text/css">
+	body {
+		counter-reset: chapter; /* Create a chapter counter scope */
+	}
+	h1:before {
+		content: counter(chapter) ". ";
+		counter-increment: chapter; /* Add 1 to chapter */
+	}
+	h1 {
+		font-size:18pt;
+		counter-reset: section; /* Set section to 0 */
+	}
+	h2:before {
+		content: counter(chapter) "." counter(section) " ";
+		counter-increment: section;
+	}
+</style>
+</head>
+<body>
+
+<h1>Overview</h1>
+Code Activator is a web-based application intended to support
+evaluation and improvement of code reading skills.
+The application takes a sequence of computer programs,
+each displayed as an HTML web form with a few actual inputs or outputs
+in the code replaced by text fields.
+The student completes the fields;
+the solution is then checked automatically and feedback is provided immediately.
+
+<h2>Who is the intended audience for this document?</h2>
+There are three user roles for Code Activator.
+<ul>
+<li>
+<i>Students</i> take quizzes and should read the <b>Game play</b> section
+of this document.
+<li>
+Question <i>authors</i> write questions and assemble them into quizzes.
+Question authors should read the <b>Game play</b>, <b>Question generation</b>,
+and <b>Quiz specification</b> sections.
+The person responsible for grading students on their performance in Code
+Activator should also read <b>Log files and analysis</b>.
+<li>
+The <i>webmaster</i>, responsible for running
+the Code Activator server and installing the content produced by question
+authors, should read <b>Server management</b>.
+</ul>
+<h2>What is the purpose of this document?</h2>
+This document specifies the required observable behaviour of the Code
+Activator system.
+<h2>What are the prerequisites for the reader?</h2>
+<ul>
+<li>
+Students reading this document should be familiar with the programming
+languages of the questions and with the terms
+<i>command-line arguments</i> (<code>argv</code>),
+<i>standard input</i> (<code>stdin</code>), and
+<i>standard output</i> (<code>stdout</code>).
+<li>
+In addition to the knowledge assumed for students,
+question authors need a good understanding of Python
+strings, lists and dictionaries,
+as question templates and quiz specifications are written
+using these Python constructs.
+<li>
+Webmasters should be familiar enough with the operating system on which the
+Code Activator server will be run to make any needed adjustments (creating
+firewall rules, running the web2py server under a restricted user, setting
+directory permissions, etc.).
+A moderate understanding of Python (enough to understand the web2py
+documentation) is an asset, but is not strictly required.
+Webmasters administrators should have an understanding of basic
+web server concepts and HTML.
+</ul>
+
+<h1>Game play</h1>
+
+CodeAct quizzes run in several modes.
+<p>
+Each quiz runs in either <i>practice mode</i> or <i>marked mode</i>.
+In practice mode, a student may check each answer for correctness;
+in marked mode, the student is given no information about answer correctness.
+<p>
+In <i>standalone mode</i>, there is a single question.
+Standalone mode is used primarily for tutorials.
+
+<h2>Display layout</h2>
+A <a href="figures/min_io_forward_0.html">Code Activator question</a> displays
+a game board with the following cells:
+<ul>
+<li>
+<i>code cell</i>: source code of a program,
+<li>
+<i>argv cell</i>: text available from command-line arguments,
+<li>
+<i>stdin cell</i>: text available as standard input, and
+<li>
+<i>stdout cell</i>: text written as standard output.
+</ul>
+Each cell may contain a mix of fixed text and text fields.
+The student's job is to complete the text fields.
+<p>
+The following buttons are displayed:
+<ul>
+<li>
+A "Check answer" button is displayed in practice mode;
+A "Submit answer" button is displayed in marked mode.
+<li>
+Except in standalone mode, "Previous" and "Next" buttons are displayed.
+</ul>
+
+<h2>Questions and answers</h2>
+<ul>
+<li>
+<i>Input-output</i>:
+When the the check/submit answer button is pressed, the code is executed.
+The actual output of the execution is saved.
+The answer is correct if the actual output from this execution
+is the same as the contents of the stdout cell.
+<li>
+<i>Bullseye</i>:
+The code cell contains one or more highlighted lines.
+When the check/submit answer button is pressed, the code is executed.
+The answer is correct if each of the highlighted lines was executed
+at least once.
+<li>
+<i>Liar-liar</i>:
+The code cell contains one or more <code>assert()</code> statements.
+When the check/submit answer button is pressed, the code is executed.
+The answer is correct if each of the assertions was false
+at least once during execution.
+<li>
+<i>Find-the-failure</i>:
+The code cell contains both a specification and an implementation of a function,
+and an invocation of that function.
+When check/submit answer button is pressed, the code is executed.
+The answer is correct if the return value of the function is incorrect,
+with respect to the specification
+</ul>
+
+<h2>Further check answer semantics</h2>
+
+Each text field has an associated type: integer, floating point or string.
+In addition, text fields in the argv cell may contain only
+digits, upper and lower case letters, hyphens, or underscore.
+If the value entered is not of the correct type,
+then the code is not executed and the answer is incorrect.
+<p>
+In I/O questions, the contents of the stdout cell
+and the output of the executed code are compared.
+Before this comparison is performed,
+all newlines are removed from the end of both outputs.
+
+<h1>Question generation</h1>
+<h2>What files comprise a generated question?</h2>
+<p>
+Each of the four codeAct question types has a set of code library files.
+Each of the <code>.txt</code> files in the set is a template corresponding to a
+display cell and contains a mix of fixed text and text field markers.
+The text field markers such as <code>$x</code> are at the positions of text
+fields in the <code>.txt</code> files.
+We briefly describe these files for each of the question types:
+<ol>
+<li>
+Input-output:
+	<ul>
+		<li>
+		<code>types.py</code>:
+		  A Python file that contains two variables:
+		  <ul>
+			<li><code>game_type</code>: indicates the type of the 
+			  question.
+			  The following are the legal values:
+			  <ul>
+				<li><code>'input_output'</code>
+				<li><code>'bullseye'</code>
+				<li><code>'liar_liar'</code>
+				<li><code>'find_the_failure'</code>
+			  </ul>
+			<li><code>parameter_types</code>: a nested dictionary.
+			  For the display cells as the key, the value is
+			  another dictionary that a text field marker is the
+			  key and the value is the text field type.
+		  </ul>
+		  <a href="py_min_io_stdin_0/types.py">An example <code>types.py</code>
+		  file</a>, from the question <code><a
+		  href="figures/py_min_io_stdin_0.html">py_min_io_stdin_0</a></code> .
+		
+		<li>
+		<code>display.txt</code>:
+		  contents of the code cell. <a
+		  href="py_min_io_stdin_0/display.txt">An example <code>display.txt</code></a>,
+		  from the question <code><a
+		  href="figures/py_min_io_stdin_0.html">py_min_io_stdin_0</a></code> .
+		
+		<li>
+		<code>argvs.txt</code>:
+		  contents of the argv cell. <a
+		  href="py_min_io_stdin_0/argvs.txt">An example <code>argvs.txt</code></a>,
+		  from the question <code><a
+		  href="figures/py_min_io_stdin_0.html">py_min_io_stdin_0</a></code> .
+		
+		<li>
+		<code>stdin.txt</code>:
+		  contents of the stdin cell. <a
+		  href="py_min_io_stdin_0/stdin.txt">An example <code>stdin.txt</code></a>,
+		  from the question <code><a
+		  href="figures/py_min_io_stdin_0.html">py_min_io_stdin_0</a></code> .
+		
+		<li>
+		<code>stdout.txt</code>:
+		  contents of the stdout cell. <a
+		  href="py_min_io_stdin_0/stdout.txt">An example <code>stdout.txt</code></a>,
+		  from the question <code><a
+		  href="figures/py_min_io_stdin_0.html">py_min_io_stdin_0</a></code> .
+		
+		<li>
+		<code>run.sh</code>:
+		  a shell script that executes the program with command-line arguments. <a
+		  href="py_min_io_stdin_0/run.sh">An example <code>run.sh</code></a>,
+		  from the question <code><a
+		  href="figures/py_min_io_stdin_0.html">py_min_io_stdin_0</a></code> .
+		
+	</ul>
+	Python only:
+	<ul>
+	<li><code>execute.py</code>:
+		  A Python program. <a
+		  href="py_min_io_stdin_0/execute.py">An example <code>execute.py</code></a>,
+		  from the question <code><a
+		  href="figures/py_min_io_stdin_0.html">py_min_io_stdin_0</a></code> .
+	</ul>
+	C only:
+	<ul>
+		<li><code>execute.c</code>:
+		  source code of the program in the code cell with lines to facilitate
+		  answer checking inserted.
+		  <a href="min_io_forward_0/execute.c">An example
+		  <code>execute.c</code> file</a>, from the question <code><a
+		  href="figures/min_io_forward_0.html">min_io_forward_0</a></code> .
+
+		<li><code>execute</code>: a binary executable compiled from
+		<code>execute.c</code>
+	</ul>
+	<li>Bullseye:
+	A Bullseye question has the same code library files
+	  as Input-output except <code>stdout.txt</code>
+	<li>Liar-liar:
+	A Liar-liar question has the same code library
+	  files as Input-output except <code>stdout.txt</code>
+	<li>Find-the-failure:
+	  A Find-the-failure question has the same code library files as
+	  Input-output except <code>stdout.txt</code> .
+	  In addition, a faulty version of the source code, and if applicable,
+	  an executable compiled from the faulty version source code are
+	  included.
+	<br />
+	<ul>
+		<li><code>faulty.sh</code>:
+		  a shell script that executes the faulty version of the
+		  program with the contents of the argv cell.
+		  <a href="py_min_ff_0/faulty.sh">An example
+		  <code>faulty.sh</code></a>, from the question <code><a
+		  href="figures/py_min_ff_0.html">py_min_ff_0</a></code> .
+	</ul>
+	Python only:
+	<ul>
+		<li>faulty.py</a>:
+		  the faulty version of the Python program as in the
+		  code cell with lines to facilitate answer checking
+		  inserted.
+		  <a href="py_min_ff_0/faulty.py">An example
+		  <code>faulty.py</code></a>, from the question <code><a
+		  href="figures/py_min_ff_0.html">py_min_ff_0</a></code> .
+		  Compare 
+		  <a href="py_min_ff_0/faulty.py">
+		  <code>execute.py</code></a>, from the same question.
+	</ul>
+	C only:
+	<ul>
+		<li><code>faulty.c</code>:
+		  the source code of the program in the code cell of a
+		  Find-the-failure question with lines to facilitate answer
+		  checking inserted.
+		<li><code>faulty</code>: executable compiled from <code>faulty.c</code>
+	</ul>
+</ol>
+
+<h2>Where is the code library?</h2>
+Generated questions are stored in subdirectories of <code>question_library/</code>
+.
+Multiple question directories can be generated from a single template file.
+
+<h2>How do you write a question template?</h2>
+<p>
+A template file is a python module with the following variables,
+their use described for each question type:
+<ol>
+	<li>
+	Input-output</a>:
+	  <ul>
+	  <li>
+	  Question specification variables:
+	  <ul>
+	  	<li><code>game_type</code>: a string that indicates the question
+		  type.
+		  Used to generate <code>types.py</code> .
+		  The following are the legal values:
+		  <ul>
+			<li><code>'input_output'</code>
+			<li><code>'bullseye'</code>
+			<li><code>'liar_liar'</code>
+			<li><code>'find_the_failure'</code>
+		  </ul>
+		<li><code>parameter_list</code>: a nested list of text field marker
+		  and text field type pairs for declaring text field markers.
+		  The allowed types are <code>int</code>, <code>float</code>, and
+		  <code>string</code>.
+		  Used to generate <code>types.py</code> .
+		<li><code>tuple_list</code>: a list of question groups.
+		  The first element of a question group is a group prefix
+		  string followed by tuples.
+		  Each tuple corresponds to a question and the
+		  tuple elements are the values of the text field markers. 
+		  Each tuple in a question group is used to generate a code
+		  library directory named with the group prefix followed by the
+		  tuple's order number, starting at 0.
+	  </ul>
+	  <li>
+	  Template variables are strings containing mix of fixed text and the
+	    text field markers:
+	  <ul>
+		<li><code>global_code_template</code> and
+		  <code>main_code_template</code>: contain the global code and the main
+		  function code of the program in the question.
+		  Each line in the templates starts with a prefix followed by a
+		  tab.
+		  The allowed prefix letters are:
+		  <ul>
+		  <li><code>d</code>: this line should be present in
+		  <code>display.txt</code>
+		  <li><code>x</code>: this line should be present in the source file
+		  (e.g. <code>execute.c</code>)
+		  </ul>
+		  Combinations of prefix letters are allowed, and the most
+		  common prefix is '<code>dx</code>', indicating that the line is 
+		  in both <code>display.txt</code> and the source file.
+
+		<li><code>argv_template</code>, <code>stdin_template</code>, and
+		  <code>stdout_template</code>: the contents templates of the argv
+		  cell, stdin cell, and stdout cell.
+		  Used to generate <code>argvs.txt</code>, <code>stdin.txt</code>, and
+		  <code>stdout.txt</code>, respectively.
+	  </ul>
+	  </ul>
+	  <a href="question_templates/min_io.py">An example Input/output question
+	  template</a>.
+
+	<li>Bullseye: In addition to the markers allowed for
+	  Input-output, text field marker type <code>target</code> is allowed in
+	  the <code>parameter_list</code> .
+	  The corresponding tuple element in the <code>tuple_list</code> has
+	  only the value <code>True</code> or <code>False</code>.
+	  When generating display.txt, the <code>target</code>
+	  type text field markers in <code>global_code_template</code> and
+	  <code>main_code_template</code> are replaced with a highlight marker 
+	  (the string '<code>ca_highlight</code>') if the
+	  corresponding tuple element is <code>True</code> and removed otherwise.
+	  When the question is displayed, this highlight marker is further replaced
+	  by HTML code that changes the text colour of the line.
+	  <a href="question_templates/min_bull.py">An example Bullseye question
+	  template</a>.
+	<li>Liar-liar:
+	  In addition to the markers allowed for Input-output template file, a text
+	  field marker in the <code>parameter_list</code> can be the
+	  <code>assert</code> type that has a string containing an expression or an
+	  empty string in the corresponding tuple element in the
+	  <code>tuple_list</code>.
+	  When generating <code>display.txt</code>, the <code>assert</code> type
+	  text field markers in the <code>global_code_template</code> and
+	  <code>main_code_template</code> are replaced with a highlight marker and an
+	  <code>assert()</code> containing the expression from that tuple element.
+	  If the corresponding tuple element is the empty string, the marker is
+	  removed.
+	  <a href="question_templates/min_liar_liar.py">An example Liar-liar
+	  question template</a>.
+	<li>Find-the-failure: 
+	  The allowed prefixes at each line in <code>global_code_template</code>
+	  and <code>main_code_template</code> are <code>d</code>, <code>x</code>,
+	  <code>X</code>, and any combination of them.
+	  The <code>X</code> prefix letter indicates that the line should
+	  be present in the faulty source file.
+	  The correct lines follow and have only the prefix '<code>x</code>'.
+	  <a href="question_templates/min_ff.py">An example Find-the-failure
+	  question template</a>.
+</ol>
+
+<h2>How do you run the question template verifier?</h2>
+The <code>template_verifier.py</code> script in the <code>generate/</code>
+directory takes the name of a template file as its only argument.
+The verifier prints error messages for common problems in a template file.
+If the given template file is well formed, the verifier produces no output.
+<p>
+For example, to verify a template called <code>example.py</code>, run:
+<p>
+<code>python template_verifier.py example.py</code>
+
+<h2>How do you run the generator script?</h2>
+To build a question template file, run <code>generate.py</code> with two
+arguments: the template file, and the destination code library.
+For example, to build questions from a template file named
+<code>example.py</code> into the standard code library directory, run:
+<p>
+<code>python generate.py example.py ../question_library</code>
+
+<h1>Quiz Specification</h1>
+A quiz is defined by a single Python file, which is normally stored in the
+<code>quiz_specs/</code> directory. A quiz specification consists of a number
+of variable definitions.
+<h2>What variables define a quiz specification?</h2>
+<ul>
+<li><code>question_lib_path</code>: the path to the question library (the
+directory containing questions).
+Normally <code>'../question_library/'</code>.
+The trailing slash is is optional.
+<li><code>question_list</code>: a list of tuples.
+Each tuple corresponds to one or more questions in the quiz.
+Each tuple has three components:
+	<ul>
+	<li><code>mark</code>: an integer that specifies how many points each
+	question from this tuple is worth.
+	<li><code>count</code>: an integer that specifies how many questions
+	should be randomly chosen from this tuple's list of directories, i.e.,
+	how many questions this tuple will create.
+	<li><code>directories</code>: a list of one or more directory names or
+	patterns (globbing patterns containing <code>*</code>, <code>?</code>, and
+	character ranges, e.g., <code>[0-9]</code>, are valid).
+	These patterns should match question directories present in the code library
+	specified by <code>question_lib_path</code> .
+	</ul>
+<li><code>practice_mode</code>: a boolean.
+If <code>True</code>, the quiz does not count for marks.
+Other differences between normal and practice mode are explained below.
+<li><code>standalone</code>: a boolean.
+If <code>True</code>, the quiz is a standalone question.
+The full details of standalone mode are explained below.
+<li><code>logged</code>: a boolean.
+Indicates whether or not the quiz should be logged.
+A quiz can only be logged if:
+	<ul>
+	<li><code>log_dir</code> is a valid directory and the server has permission to
+	write into it.
+	<li>The student taking the quiz has logged in with some username.
+	</ul>
+<li><code>log_dir</code>: the directory into which log files should be written,
+for example, <code>'quiz_logs/'</code> .
+Can be the empty string (<code>''</code>) if <code>logged</code> is set to 
+<code>False</code> .
+</ul>
+<h2>Example quiz specification file</h2>
+<a href="quiz_specs/two_questions.py">An example of a valid quiz specification
+file</a>.
+The first question will be any one of the directories matched by the pattern
+<code>'min_io_forward_*'</code>.
+The second question will be one of <code>min_bull_1</code> ,
+<code>min_bull_2</code> , or <code>min_bull_4</code> , but not
+<code>min_bull_3</code> .
+The quiz is in practice mode and its results will not be logged.
+<h2>Quiz specification verifier</h2>
+There is a script that can check quiz specification files for common errors,
+including a check to make sure the patterns and directory names given in each
+tuple's <code>directories</code> list exist.
+It takes the name of the quiz specification to be checked as its only argument.
+<p>
+For example, to check a quiz specification file called <code>example.py</code>, run:
+<p>
+<code>python qspec_verifier.py example.py</code>
+<h2>What are the differences between the different quiz modes?</h2>
+<h3>Practice = true vs. false</h3>
+Setting <code>practice_mode = True</code> causes the following changes to a quiz:
+<ul>
+<li>The quiz can be played anonymously (non-practice quizzes require that a
+student be logged in, so that marks can be recorded).
+<li>The student is informed whether answers are correct or incorrect.
+<li>The "Submit Answer" button is labelled "Check Answer" instead.
+</ul>
+<h3>Standalone = true vs. false</h3>
+A standalone quiz comprises only one question.
+In a standalone quiz the "Previous" and "Next" buttons are hidden, and only
+the first tuple from <code>question_list</code> is used; subsequent tuples
+(if any are present) are ignored.
+<p>
+Note that the question displayed in a standalone quiz is only definite if
+there is a single entry in the <code>directories</code> list &mdash; if there
+are multiple directories (or a globbing pattern expands to multiple directory
+names), the quiz's only question is chosen randomly from the
+<code>directories</code> list.
+
+<h1>Log files and analysis</h1>
+<h2>What tools are there for analysing log files?</h2>
+There is a tool, <code>log_analysis.py</code>, for processing a directory of
+quiz log files into a tab-separated list of student usernames and their score
+for that quiz.
+It takes the log directory as its only argument.
+For example, to print a list of student marks for a log directory called
+<code>example_quiz/</code>, run:
+<p>
+<code>python log_analysis.py example_quiz/</code>
+
+<h1>Server management</h1>
+
+<h2>How do you start/stop server?</h2>
+
+To start the server, <code>cd</code> into the <code>web2py/</code> directory and
+run <code>./start.sh</code> .
+
+<h3>Listening on loopback only</h3>
+
+By default, the server listens on <code>127.0.0.1</code> (localhost) on port
+<code>8080</code>.
+
+To ensure that this is the case, inspect the last line of
+<code>start.sh</code> .
+It should read:<br />
+<code>python web2py.py -i 127.0.0.1 -p 8080 -a password</code>
+
+<h3>Listening on other IP addresses and ports</h3>
+
+To set the IP address and port that the server listens on, change the
+<code>-i</code> and <code>-p</code> parameters, respectively, on the last line 
+of <code>start.sh</code> .  
+The <code>-a</code> parameter is the web2py administrator password.
+
+<h4>Example</h4>
+For example, to listen on the IP address <code>192.168.2.55</code> on port
+<code>80</code>, with <code>s3cret</code> as the web2py administrator password,
+change the last line of <code>start.sh</code> to:<br />
+<code>python web2py.py -i 192.168.2.55 -p 80 -a s3cret</code>
+
+<h2>How do you install and access a plain HTML page P?</h2>
+Plain HTML pages are HTML files that should be served exactly as they are, with
+no special processing by the server.
+<h3>What changes need to be made to P?</h3>
+Links to other static content (other plain HTML pages, style sheets, images,
+etc.) need no special treatment: references to other files in <code>static/</code>
+are ordinary relative links.
+<p>
+Relative links to a particular quiz should have the form:<br />
+&nbsp; &nbsp; <code>../ca_controller/quiz?quiz_spec=../quiz_specs/Q</code><br />
+where <code>Q</code> is the name of the quiz specification.
+<h3>Where does P go?</h3>
+Plain HTML pages go in the
+<code>web2py/applications/codeAct/static/</code> directory.
+<h3>What is the URL of P?</h3>
+Assuming the file's name is <code>P.html</code>,
+<code>http://localhost:8080/codeAct/static/P.html</code> .
+(localhost:8080 should be replaced with the hostname and port your server is
+running on.)
+
+<h2>How do you install and access a quiz with quiz specification Q?</h2>
+Suppose a quiz specification file called <code>Q.py</code> :
+<h3>Where does Q go?</h3>
+Put <code>Q.py</code> in the <code>quiz_specs/</code> directory.
+<h3>What is the URL of Q?</h3>
+<code>http://localhost:8080/codeAct/ca_controller/quiz?quiz_spec=../quiz_specs/Q</code>
+
+<p>
+<b style="color:#dd0000">Question: should we modify ca_controller so that
+"../quiz_specs/" can be omitted from the above URL? It is the same for all quiz
+specs.</b>
+
+
+<h1>Appendix</h1>
+The webmaster may also be interested in learning more about
+the web2py framework, on which Code Activator is written.
+Web2py documentation is available from the <a
+href="http://web2py.com/book">official web2py book</a>.
+Of particular interest is Chapter 4, which details the API.
+</body>
+</html>

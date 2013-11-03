@@ -1,0 +1,59 @@
+================================
+FDB Question Template Syntax
+================================
+FDB question author should ensure that the format of a FDB question template
+complies the following:
+- A FDB question template contains a variable named 'question_tuples'
+- question_tuples is a list of lists.
+- question_tuples[i] is a list of questions.
+- question_tuples[i][0] is a question group prefix string
+  (e.g. 'fdb_forward', 'fdb_mixed')
+- question_tuples[i][1..n] is a dictionary with 3 key-value pairs:
+	- For 1 <= j < n+1,
+		 question_tuples[i][j]['traffic_table']
+		 question_tuples[i][j]['fdb']
+		 question_tuples[i][j]['f_result']
+
+1. question_tuples[i][j]['traffic_table']
+Specifies the traffic table
+Syntax
+  - type(question_tuples[i][j]['traffic_table']) == list
+  - len(question_tuples[i][j]['traffic_table']) >= 0
+	- type(question_tuples[i][j]['traffic_table'][k]) == list
+	- len(question_tuples[i][j]['traffic_table'][k]) == 3
+		- question_tuples[i][j]['traffic_table'][0..1] is None
+		    or is in ['a','b','c','d','e']
+		- question_tuples[i][j]['traffic_table'][2] is None
+		    or is in [1,2,3,4]
+Example
+  question_tuples[i][j]['traffic_table'][k] can be
+    # src dest port
+    ['a','b', 1]   or [None,None,None] where a None marks a hotspot
+
+2. question_tuples[i][j]['fdb']
+Specifies the forward database for the 4 ports
+Syntax
+  - type(question_tuples[i][j]['fdb']) == list
+  - len(question_tuples[i][j]['fdb']) == 4
+	- type(question_tuples[i][j]['fdb'][k]) == list or NoneType
+	- 0 <= len(question_tuples[i][j]['fdb'][k]) < 6
+	- question_tuples[i][j][k][l] is in ['a','b','c','d','e']
+Example
+  question_tuples[i][j]['fdb'][k] is a fdb list of str from
+    ['a','b','c','d','e'] for a port k
+  If question_tuples[i][j]['fdb'][j] == None, it is a hotspot.
+  An empty list represents a empty fdb for a port.
+
+3. question_tuples[i][j]['f_result']
+Specifies an extra frame and the forward result.
+Syntax
+  - type(question_tuples[i][j]['f_result']) == list
+  - len(question_tuples[i][j]['f_result']) == 4
+  - question_tuples[i][j]['f_result][0..1] is None or in ['a','b','c','d','e']
+  - type(question_tuples[i][j]['f_result][2]) is NoneType or list
+  - 0 <= len(question_tuples[i][j]['f_result][2]) <= 4
+Example
+  question_tuples[i][j]['f_result'] can be 
+  # src, dest, port, result_ports
+  ['a','b',1,[2,3,4]] or  [None,'b',1,None]
+  A None for any of the 4 items marks a hotspot.

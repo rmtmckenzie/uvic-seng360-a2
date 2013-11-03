@@ -1,0 +1,43 @@
+Multiple Choice Manual Test Plan
+
+Open URL
+	http://localhost:7777/cqg/quiz?spec=test_multiple_choice
+
+PF	a multiple choice question appears
+
+PF	display table has 1 column
+
+PF	all cells have black border
+
+-----  question cell
+
+PF	Approximately 10% of the cell width separates "Question text" from
+	 the left black border
+
+PF	Below "Question text" are three radio buttons, labelled "incorrect",
+	 "correct", "incorrect"
+
+PF	The radio buttons are indented slightly relative to "Question text"
+
+PF	The radio buttons are all the same distance from the left black border
+
+----- answer checking
+
+select the first "incorrect", then press Check answer
+
+PF	"Incorrect" displayed in red
+
+select "correct", then press Check answer
+
+PF	"Correct" displayed in green
+
+----- layout edge cases
+
+press the "2" button
+
+PF	Long blocks of text wrap flush-left and have left and right margins
+	 approximately 10% of the cell width
+
+PF	"Question text" displays as <tt>
+
+PF	There are checkboxes next to possible answers, instead of radio buttons

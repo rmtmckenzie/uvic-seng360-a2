@@ -1,0 +1,153 @@
+#!/usr/bin/python
+
+import sys
+import verify_util
+import crc_util
+
+# list of verification identifier/condition pairs
+condition_list = [
+	['variables_defined',
+		"'product_family', 'question_type', 'divisor', 'message', "
+		"'divisor_hotspots', 'dividend_hotspots', 'quotient_hotspots', "
+		"'remainder_hotspots', 'rows_hotspots' are defined"],
+	['product_family',
+		"'product_family' is crc"],
+	['question_type',
+		"'question_type' is crc"],
+	['divisor_type',
+		"divisor is a non-empty string of '0' and '1'"],
+	['divisor_zero',
+		"divisor cannot begin with a '0'"],
+	['divisor_len',
+		"length of divisor must be in [2..length of message]"],
+	['message_type',
+		"message is a non-empty string of '0' and '1'"],
+	['divisor_hotspots',
+		"divisor_hotspots must be a list of distinct indeces into "
+		"divisor"],
+	['dividend_hotspots',
+		"dividend_hotspots must be a list of distinct indeces "
+		"into message with len(divisor)-1 0 bits appended"],
+	['quotient_hotspots',
+		"quotient_hotspots must be a list of distinct indeces into "
+		"quotient"],
+	['remainder_hotspots',
+		"remainder_hotspots must be a list of distinct indeces into "
+		"remainder"],
+	['rows_hotspots_type',
+		"rows_hotspots must be a list of distinct lists of 2 integers"],
+	['rows_hotspots_row',
+		"each sub-list[0] in rows_hotspots must be < "
+		"2*len(message) - 1"],
+	['rows_hotspots_col',
+		"each sub-list[1] in rows_hotspots must not exceed the "
+		"length of divisor"],
+]
+
+def is_distinct_index_list(length,indeces):
+	'''
+	purpose
+		returns true if indeces is a list of distinct indeces into
+		an indexable of length length, false otherwise
+	precondition
+		length is a positive int
+		indeces is a list of integers
+	'''
+	if not (type(indeces) is list):
+		return False
+	for i in indeces:
+		if not (type(i) is int):
+			return False
+	if not (len(set(indeces)) == len(indeces)):
+		return False
+	for i in indeces:
+		if not (i in range(length)):
+			return False
+	return True
+
+def verify_conditions(question_directory,config,condition_list):
+	conditions_dictionary = dict(condition_list)
+
+	for v in ['product_family', 'question_type', 'divisor', 'message',
+	 'divisor_hotspots', 'dividend_hotspots', 'quotient_hotspots',
+	 'remainder_hotspots', 'rows_hotspots']:
+		if not (v in dir(config)):
+			return conditions_dictionary['variables_defined']
+	
+	if not (config.product_family == 'crc'):
+		return conditions_dictionary['product_family']
+	
+	if not (config.question_type == 'crc'):
+		return conditions_dictionary['question_type']
+
+	if not (type(config.divisor) == str and len(config.divisor) > 0):
+		return conditions_dictionary['divisor_type']
+	for character in config.divisor:
+		if not (character in ['0','1']):
+			return conditions_dictionary['divisor_type']
+
+	if not (config.divisor[0] == '1'):
+		return conditions_dictionary['divisor_zero']
+	if not (len(config.divisor) >= 2 and 
+	 len(config.divisor) <= len(config.message)):
+		return conditions_dictionary['divisor_len']
+
+	if not (type(config.message) == str and len(config.message) > 0):
+		return conditions_dictionary['message_type']
+	for character in config.message:
+		if not (character in ['0','1']):
+			return conditions_dictionary['message_type']
+
+	if not is_distinct_index_list(len(config.divisor),
+	 config.divisor_hotspots):
+		return conditions_dictionary['divisor_hotspots']
+
+	if not is_distinct_index_list( crc_util.dividend_len(
+	 len(config.divisor),len(config.message)), config.dividend_hotspots):
+		return conditions_dictionary['dividend_hotspots']
+
+	if not is_distinct_index_list( crc_util.quotient_len(
+	 len(config.divisor),len(config.message)), config.quotient_hotspots):
+		return conditions_dictionary['quotient_hotspots']
+
+	if not is_distinct_index_list( crc_util.remainder_len(
+	 len(config.divisor),len(config.message)), config.remainder_hotspots):
+		return conditions_dictionary['remainder_hotspots']
+
+	# rows_hotspots
+	if not (type(config.rows_hotspots) is list):
+		return conditions_dictionary['rows_hotspots_type']
+	for s in config.rows_hotspots:
+		if not (type(s) is list):
+			return conditions_dictionary['rows_hotspots_type']
+	for s in config.rows_hotspots:
+		if not (len(s) == 2):
+			return conditions_dictionary['rows_hotspots_type']
+		for i in s:
+			if not (type(i) is int):
+				return conditions_dictionary[
+				 'rows_hotspots_type']
+	# uniqueness check: need to cast to tuple because list
+	# not hashable (i.e. cannot set() a list of lists).
+	if not (len(config.rows_hotspots) ==
+		 len(set([tuple(s) for s in config.rows_hotspots]))):
+		return conditions_dictionary['rows_hotspots_type']
+	for s in config.rows_hotspots:
+		if not (s[0] in range( crc_util.number_of_rows(
+		 len(config.divisor),len(config.message)))):
+			return conditions_dictionary['rows_hotspots_row']
+	for s in config.rows_hotspots:
+		if not (s[1] in range( crc_util.row_width(
+		 len(config.divisor),len(config.message)))):
+			return conditions_dictionary['rows_hotspots_col']
+
+# handle invocation from command line
+if __name__ == '__main__':
+	n = verify_util.question_verifier_main(sys.argv,
+         'Question Type crc: Question Verification Conditions',
+         condition_list,verify_conditions)
+
+        if n == verify_util.COMMAND_LINE_SYNTAX_FAILURE:
+                print 'Usage: crc_question_verifier.py [question_directory]'
+
+        sys.exit(n)

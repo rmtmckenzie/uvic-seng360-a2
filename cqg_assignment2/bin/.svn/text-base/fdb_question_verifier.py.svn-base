@@ -1,0 +1,141 @@
+#!/usr/bin/python
+
+import sys
+import os
+
+'''
+Purpose
+        print prefix,v_name,'['level[i]']',msg and exit the program
+Precondition
+        prefix,v_name,and msg are legal python strings
+	level is iterable
+	level[i] is str or int
+'''
+def exit(prefix='',v_name='',level=[],msg=''):
+	for l in level:
+		if type(l) == str:
+			v_name += '[\''+l+'\']'
+		if type(l) == int:
+			v_name += '['+str(l)+']'
+        print prefix+v_name,msg
+        sys.exit()
+
+if len(sys.argv) != 2:
+	print 'Usage:',sys.argv[0],'<path_to_question_library_dir>'
+	sys.exit(-1)
+
+# Open the target types.py
+try:
+	types = os.path.join(sys.argv[1],'types.py')
+	exec(open(types,'r').read())
+except IOError:
+	exit(msg=sys.argv[1]+'/types.py cannot be opened.')
+
+# Check necessary variables
+for v in ['product_family','question_type','values']:
+	if v not in dir():
+		exit('Variable '+v+' cannot be found in '+types+'.')
+
+# Check product_family
+if type(product_family) != str:
+	exit('Variable product_family is not of type str.')
+if product_family != 'fdb_question':
+	exit('Variable product_family is not \'fdb_question\'.')
+
+# Check question_type
+if type(question_type) != str:
+	exit('Variable question_type is not of type str.')
+if question_type != 'fdb':
+	exit('Variable question_type is not \'fdb\'.')
+
+# Check values
+if type(values) != dict:
+	exit('Variable values is not of type dict.')
+# Check for necessary keys in values
+required_keys = ['traffic_table','fdb','f_result']
+for key in required_keys:
+	if key not in values.keys():
+		exit('Key \''+key+'\' cannot be found in dict values.')
+	if type(values[key]) != list:
+		exit('values[\''+key+'\'] is not of type list.')
+
+# Useful values for the verification
+vn = 'values'
+valid_macs = ['a','b','c','d','e']
+valid_ports = [1,2,3,4]
+
+# Verify values['traffic_table']
+for i,row in enumerate(values['traffic_table']):
+	if type(row) != list:
+		exit('',vn,['traffic_table',i],'is not of type list.')
+	if len(row) != 3:
+		exit('Length of ',vn,['traffic_table',i],'is not equal to 3.')
+	for j,mac in enumerate(row[0:2]):
+		if type(mac) == str:
+			if mac not in valid_macs:
+				exit('',vn,['traffic_table',i,j],'is not in '+\
+				  str(valid_macs))
+		elif type(mac) == type(None):
+			pass
+		else:
+			exit('',vn,['traffic_table',i,j],\
+			 'is not of type str or NoneType')
+
+	if type(row[2]) == int:
+		if row[2] not in valid_ports:
+			exit('',vn,['traffic_table',i,2],\
+			  'is not in '+str(valid_ports))
+	elif type(row[2]) == type(None):
+		pass
+	else:
+		exit('',vn,['traffic_table',i,2],\
+		  'is not of type int or NoneType')
+
+# Verify values['fdb']
+if len(values['fdb']) != 4:
+	exit('Length of ',vn,['fdb'],'is not equal to 4.')
+for i,pl in enumerate(values['fdb']):
+	if type(pl) == list:
+		if len(pl) > 5:
+			exit('Length of ',vn,['fdb',i],'is larger than 5.')
+		for j,mac in enumerate(pl):
+			if mac not in valid_macs:
+				exit('',vn,['fdb',i,j],\
+				  'is not in '+str(valid_macs))
+	elif type(pl) == type(None):
+		pass
+	else:
+		exit('',vn,['fdb',i],'is not of type list or NoneType')
+
+# Verify values['f_result']
+if len(values['f_result']) != 4:
+	exit('Length of ',vn,['f_result'],'is not equal to 4.')
+# Src and dest
+for i,mac in enumerate(values['f_result'][0:2]):
+	if type(mac) == str:
+		if mac not in valid_macs:
+			exit('',vn,['f_result',i],'is not in '+str(valid_macs))
+	elif type(mac) == type(None):
+		pass
+	else:
+		exit('',vn,['f_result',i],'is not of type str or NoneType.')
+# Received port
+if type(values['f_result'][2]) == int:
+	if values['f_result'][2] not in valid_ports:
+		exit('',vn,['f_result',2],'is not in '+str(valid_ports))
+elif type(values['f_result'][2]) == type(None):
+	pass
+else:
+	exit('',vn,['f_result',2],'is not of type int or NoneType.')
+
+# Port list
+if type(values['f_result'][3]) == list:
+	if len(values['f_result'][3]) > 4:
+		exit('Length of ',vn,[i,j,'f_result',3],'is larger than 4.')
+	for i,port in enumerate(values['f_result'][3]):
+		if port not in valid_ports:
+			exit('',vn,['f_result',3,i],'is not in '+str(valid_ports))
+elif type(values['f_result'][3]) == type(None):
+	pass
+else:
+	exit('',vn,[i,j,'f_result',3],'is not of type list or NoneType.')

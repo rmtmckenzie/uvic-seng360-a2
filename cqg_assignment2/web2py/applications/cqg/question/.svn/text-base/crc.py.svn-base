@@ -1,0 +1,257 @@
+import os
+import math
+import crc_util
+import html_util
+import file_util
+
+class crc:
+	def __init__(self, question_library_path, question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(
+		 os.path.join(question_library_path,question_path,
+		 'cqg_config.py'))
+
+		self.divisor = config.divisor
+		self.message = config.message
+		self.divisor_hotspots = config.divisor_hotspots
+		self.dividend_hotspots = config.dividend_hotspots
+		self.quotient_hotspots = config.quotient_hotspots
+		self.remainder_hotspots = config.remainder_hotspots
+		self.rows_hotspots = config.rows_hotspots
+
+		self.input_element_ids = None
+
+		( self.dividend, self.quotient,
+		 self.remainder, self.rows ) = \
+		 crc_util.crc(self.divisor, self.message)
+
+	def get_question_library_path(self):
+		return self.question_library_path
+	
+	def get_question_path(self):
+		return self.question_path
+
+	def get_css(self,answer):
+		'''
+		purpose
+			return crc-specific css code
+		precondition
+			none
+		'''
+		return style
+
+	def get_html(self,answer):
+		return html_base.replace("$CALCULATION",
+		 get_calculation_table(self,answer))
+
+	def get_input_element_ids(self):
+		'''
+		hotspot naming scheme:
+		hotspots field names have the form prefix+index where prefix is
+		a string naming a part of the calculation and index is an index
+		into that part. e.g., answer['divisor0'] would be the submitted
+		value for the first bit in the divisor.
+
+		rows coordinates have two parts, a row number (row 0 is the row
+		immediately below the dividend) and the index (column) within
+		that row, separated by _ . e.g., in the calculation
+		    10
+		10 100
+		   10
+		    0[0] <--- row1_1 would refer to this bit.
+		    00
+		     0
+		'''
+		if self.input_element_ids is None:
+			ids = []
+			for i in self.divisor_hotspots:
+				ids.append('divisor' + str(i))
+			for i in self.dividend_hotspots:
+				ids.append('dividend' + str(i))
+			for i in self.quotient_hotspots:
+				ids.append('quotient' + str(i))
+			for i in self.remainder_hotspots:
+				ids.append('remainder' + str(i))
+			for r,c in self.rows_hotspots:
+				ids.append('row' + str(r) + '_' + str(c))
+			self.input_element_ids = ids
+
+		return self.input_element_ids[:]
+
+	def check_answer(self,answer):
+		# type-check
+		for k in self.get_input_element_ids():
+			if answer[k] not in ['0','1']:
+				return False
+
+		# assemble the submitted calculation
+		supplied_divisor = substitute_hotspots(
+		 self.divisor,'divisor',self.divisor_hotspots,answer)
+		supplied_dividend = substitute_hotspots(
+		 self.dividend,'dividend',self.dividend_hotspots,answer)
+		supplied_quotient = substitute_hotspots(
+		 self.quotient,'quotient',self.quotient_hotspots,answer)
+		supplied_remainder = substitute_hotspots(
+		 self.remainder,'remainder',self.remainder_hotspots,answer)
+
+		supplied_rows = []
+		for i in range(len(self.rows)):
+			# hotspots in this row are the column value in
+			# [row,col] pairs where row == this row
+			row_hotspots = \
+			 [c for r,c in self.rows_hotspots if r == i]
+			supplied_rows.append( substitute_hotspots(
+			  self.rows[i],'row'+str(i)+'_',row_hotspots,answer))
+
+		# check for leading 0 on divisor
+		if supplied_divisor[0] == '0':
+			return False
+
+		# compare submitted to fresh calculation on submitted
+		# divisor & message
+		return (supplied_dividend,supplied_quotient,supplied_remainder,
+		  supplied_rows) == crc_util.crc(supplied_divisor,
+		  supplied_dividend[0:len(self.message)])
+
+def get_bit_textbox(answer,key):
+	value = ''
+	if answer[key] in ['0','1']:
+		value = answer[key]
+	return html_util.get_text(key,value,1)
+
+def substitute_hotspots(original,hotspot_prefix,hotspot_indeces,answer):
+	'''
+	purpose
+		returns a copy of original with hotspot values from answer
+		substituted in hotspot_indeces, e.g.:
+		substitute_hotspots('aaa','pre',[1,2],{'pre1':'b','pre2':'c'})
+		would return 'abc'
+	precondition
+		original,hotspot_prefix are strings
+		hotspot indeces is a list of indeces into original
+		answer is an answer dictionary
+	'''
+	substituted = list(original)
+	for i in hotspot_indeces:
+		substituted[i] = answer[hotspot_prefix+str(i)]
+	return "".join(substituted)
+
+def get_calculation_table(self,ans):
+	'''
+	purpose
+		construct the display of the CRC 'long division'
+	precondition
+		(same as for question.get_html())
+	'''
+	calc = '<table id="calculation" cellspacing="0">\n' 
+
+	# quotient
+	calc += '<tr>\n'
+	for i in range(2*len(self.divisor) - 1):
+		calc += '<td></td>'
+	for i in range(len(self.quotient)):
+		if i in self.quotient_hotspots:
+			calc += '<td>' + \
+			 get_bit_textbox(ans,'quotient' + str(i)) + '</td>'
+		else:
+			calc += '<td>' + self.quotient[i] + '</td>'
+	calc += '\n</tr>\n'
+
+	# divisor
+	calc += '<tr>\n'
+	for i in range(len(self.divisor)):
+		if i in self.divisor_hotspots:
+			calc += '<td>' + \
+			 get_bit_textbox(ans,'divisor' + str(i)) + '</td>'
+		else:
+			calc += '<td>' + self.divisor[i] + '</td>'
+
+	# dividend
+	for i in range(len(self.dividend)):
+		if i == 0:
+			calc += '<td class="left_border top_border">'
+		else:
+			calc += '<td class="top_border">'
+		if i in self.dividend_hotspots:
+			calc += get_bit_textbox(ans,'dividend'+str(i)) + '</td>'
+		else:
+			calc += self.dividend[i] + '</td>'
+	calc += '\n</tr>\n'
+
+	# calculation step rows
+	for i in range(len(self.rows)):
+		calc += '<tr>\n'
+		for j in range(int(math.ceil(i/2.0))+len(self.divisor)):
+			calc += '<td></td>'
+		for j in range(len(self.rows[i])):
+			if i % 2 == 0:
+				calc += '<td class="bottom_border">'
+			else:
+				calc += '<td>'
+			if [i,j] in self.rows_hotspots:
+				calc += get_bit_textbox(ans,
+				 'row' + str(i) + '_' + str(j)) + '</td>'
+			else:
+				calc += self.rows[i][j] + '</td>'
+		calc += '\n</tr>\n'
+	
+	# remainder
+	calc += '<tr>\n'
+	for i in range(int(math.ceil(len(self.rows)/2.0)) + len(self.divisor)):
+		calc += '<td></td>'
+	for i in range(len(self.remainder)):
+		if i in self.remainder_hotspots:
+			calc += '<td>' + get_bit_textbox(ans,
+			 'remainder' + str(i)) + '</td>'
+		else:
+			calc += '<td>' + self.remainder[i] + '</td>'
+	calc += '\n</tr>\n</table>\n'
+	return calc
+
+style = '''\
+		#crc {
+			width:100%;
+			height:100%;
+			border:0px;
+		}
+		#title {
+			height:30px;
+			text-align:center;
+			background-color:#0bc000;
+		}
+		#calculation {
+			margin:auto auto;
+			border:0px;
+		}
+		#calculation td {
+			padding:2px 4px;
+			height:20px;
+			width:15px;
+			border:0px;
+			text-align:center;
+		}
+		#calculation td.bottom_border {
+			border-bottom:solid;
+		}
+		#calculation td.top_border {
+			border-top:solid;
+		}
+		#calculation td.left_border {
+			border-left:solid;
+			padding-left:1px;
+		}
+		#calculation input {
+			height:20px;
+			width:15px;
+		}
+'''
+
+html_base = '''\
+<table id="crc" cellspacing="0">
+<tr><td id="title">
+ <b><font size="5">CRC</font></b>
+</td></tr>
+<tr><td>$CALCULATION</td></tr>
+</table>
+'''

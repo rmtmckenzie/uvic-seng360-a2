@@ -1,0 +1,34 @@
+import os
+import file_util
+import html_util
+
+class echo_lite:
+	def __init__(self,question_library_path,question_path):
+		self.question_library_path = question_library_path
+		self.question_path = question_path
+		config = file_util.dynamic_import(
+		 os.path.join(question_library_path,question_path,
+		 'cqg_config.py'))
+
+		self.correct_answer = config.correct_answer
+		
+	def get_question_library_path(self):
+		return self.question_library_path
+	
+	def get_question_path(self):
+		return self.question_path
+
+	def get_html(self,answer):
+		if answer['actual_answer'] is None:
+			actual_answer = ''
+		else:
+			actual_answer = answer['actual_answer']
+
+		return self.correct_answer + \
+		 html_util.get_text('actual_answer',actual_answer)
+	
+	def get_input_element_ids(self):
+		return ['actual_answer']
+	
+	def check_answer(self,answer):
+		return answer['actual_answer'] == self.correct_answer

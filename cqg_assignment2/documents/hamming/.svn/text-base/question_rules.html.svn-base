@@ -1,0 +1,19 @@
+<h2>Question type: hamming</h2>
+There are two variants of the hamming question type:
+
+<h3>Fill</h3>
+Each hamming fill question displays an instruction indicating either even or odd
+parity. Below this is a Hamming code word, with some bits replaced by select
+menus.
+<p>
+To answer the question correctly, you must select 0 or 1 from each of the
+menus, so that the bits form a valid Hamming code word according to the
+indicated parity.
+
+<h3>Finderror</h3>
+Each hamming finderror question displays an instruction indicating either even
+or odd parity. Below this is a Hamming code word containing one incorrect bit.
+Below each bit is a radio button.
+<p>
+To answer the question correctly, you must select the radio button below the
+incorrect bit.

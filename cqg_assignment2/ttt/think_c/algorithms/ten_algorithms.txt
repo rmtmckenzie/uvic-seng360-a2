@@ -1,0 +1,21 @@
+Y linear search
+Y binary search
+	flesh out with io, be, ff, slices
+
+Y selection sort
+	with counts
+? merge sort
+	impl needed
+
+Y base conversion
+	needed full version: int -> string (binary, octal, decimal, hex)
+
+Y gcd
+
+Y trapezoidal rule
+? bisection method
+
+? vector in-product
+	sum of element-by-element products
+? matrix multiply
+	key is dealing with 2D rep: dynamic, parameters

@@ -1,0 +1,76 @@
+import bitstring_util
+
+class ip_address():
+	'''
+	purpose
+		represents an IP address or mask and provides methods for
+		manipulating and displaying it
+	precondition
+		all addresses assumed to be in network class A, B, or C only
+	'''
+
+	def __init__(self,decimal_tuple):
+		'''
+		precondition
+			decimal_tuple is a tuple of the form (d,d,d,d) where
+			 each d is in range(256)
+		'''
+		self.bits = [bitstring_util.from_int(8,i)
+		 for i in decimal_tuple]
+	
+	def get_class(self):
+		'''
+		purpose
+			returns the network class of this address
+		precondition
+			this address is in class 'A', 'B', or 'C'
+		'''
+		first_byte = bitstring_util.to_int(self.bits[0])
+		if first_byte < 128:
+			return 'A'
+		elif first_byte < 192:
+			return 'B'
+		else:
+			return 'C'
+
+	def get_class_mask(self):
+		'''
+		purpose
+			returns netmask corresponding to the network class of
+			this address
+		precondition
+			none
+		'''
+		class_masks = {
+			'A': (255,0,0,0),
+			'B': (255,255,0,0),
+			'C': (255,255,255,0),
+		}
+		return ip_address(class_masks[self.get_class()])
+
+	def get_decimal_tuple(self):
+		'''
+		purpose
+			return the decimal tuple form of this ip address
+		precondition
+			none
+		'''
+		decimal_ip = [bitstring_util.to_int(i) for i in self.bits]
+		return tuple(decimal_ip)
+
+	def apply_mask(self,mask):
+		'''
+		purpose
+			return network part of this IP address according to
+			provided subnet mask
+		precondition
+			mask is an ip_address instance
+			mask's binary representation must be of the form 1*0*
+		'''
+		# create a blank ip_address, then populate it
+		new_ip = ip_address( (0,0,0,0) )
+		new_ip_bits = [
+		 bitstring_util.cqg_and(self.bits[i],mask.bits[i])
+		 for i in range(4)]
+		new_ip.bits = new_ip_bits
+		return new_ip

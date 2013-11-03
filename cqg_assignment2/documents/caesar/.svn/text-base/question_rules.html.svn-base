@@ -1,0 +1,8 @@
+<h2>Question type: caesar</h2>
+Each caesar question displays an instruction indicating a key. Below this is a
+table with two rows: a plaintext row, and a ciphertext row. Some letters in the
+ciphertext may be replaced with textboxes.
+<p>
+To answer the question correctly, you must fill in each textbox with the
+ciphertext letter obtained by encrypting the plaintext letter above it
+with a caesar cipher using the given key.

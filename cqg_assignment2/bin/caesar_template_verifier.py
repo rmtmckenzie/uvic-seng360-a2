@@ -52,12 +52,12 @@ def verify_conditions(template,condition_list):
 	group_name_list = []
 	for group in template.group_list:
 		#3
-		if not (type(group) == list and len(group >= 2):
+		if not (type(group) == list and len(group >= 2)):
 			return conditions_dictionary['group_format'] + \
 				'\n\tgroup: ' + str(group)
 
 		#4
-		if not(type(group[0] == str and group[0] not in group_name_list):
+		if not(type(group[0]) == str and group[0] not in group_name_list):
 			return conditions_dictionary['group_unique'] + \
 				'\n\tgroup: ' + str(group)
 		else:
@@ -65,19 +65,19 @@ def verify_conditions(template,condition_list):
 
 		for question in group[1:]:
 			#5
-			if not (type(question) == list and len(question) == 3)
+			if not (type(question) == list and len(question) == 3):
 				return \
 					conditions_dictionary['question_format'] + \
 					'\n\tquestion: ' + str(question)
 			#6
-			if not (type(question[0]) == str and
-					min(question[0]) >= 'A') and
-					max(question[0] <= 'Z')):
+			if not (type(question[0]) == str and \
+					min(question[0]) >= 'A' and \
+					max(question[0]) <= 'Z'):
 				return conditions_dictionary['plain_text'] + \
 					'\n\tquestion: ' + str(question)
 			#7
-			if not (type(question[1]) == int and
-					question[1] < 26 and
+			if not (type(question[1]) == int and \
+					question[1] < 26 and \
 					question[1] >= 0):
 				return conditions_dictionary['key'] + \
 					'\n\tquestion: ' + str(question)
@@ -88,9 +88,9 @@ def verify_conditions(template,condition_list):
 
 			for i in question[2]:
 				#9
-				if not (type(i) is int and
-						i < len(question[0]) and
-						i >= 0:
+				if not (type(i) is int and \
+						i < len(question[0]) and \
+						i >= 0):
 					return conditions_dictionary['hotspot_individual'] + \
 						'\n\tquestion: ' + str(question)
 
@@ -99,9 +99,9 @@ def verify_conditions(template,condition_list):
 if __name__ == '__main__':
 	n = verify_util.template_verifier_main(
 		sys.argv,
-		"Question Type caesar: Template Verification Conditions',
+		"Question Type caesar: Template Verification Conditions",
 		condition_list,
-		verifify_conditions)
+		verify_conditions)
 	if n == verify_util.COMMAND_LINE_SYNTAX_FAILURE:
 		print 'Usage: caesar_template_verifier.py [template_file]'
 

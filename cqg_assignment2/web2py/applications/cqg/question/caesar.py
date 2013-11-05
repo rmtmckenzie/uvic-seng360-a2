@@ -110,7 +110,17 @@ class caesar:
 				if K was not in submitted answer
 					answer[K] == None
 		'''
-		pass
+		for key,value in answer:
+			ind = int(key.replace('hotspot',''))
+			if self.answer[ind] == value:
+				continue
+			else:
+				break
+		else:
+			#this is valid python. This is executed iff
+			# the loop finishes without a break.
+			return true
+		return false
 
 style = '''
 	#question_cell div {

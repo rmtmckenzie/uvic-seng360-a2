@@ -71,27 +71,27 @@ class caesar:
 					answer[K] == None
 		'''
 		html = "<div>"
-		html += "<p>Use a <b>caesar</b> cipher with key {}"\
-				" to encrypt the plain text.</p>".format(self.key)
+		html += ("<p>Use a <b>caesar</b> cipher with key {0}"\
+				" to encrypt the plain text.</p>").format(self.key)
 
 		html += "<table cellspacing='0' cellpadding='3'>\n"
 
 		question_row = "<tr><td>plain text</td>"
 		answer_row = "<tr><td>cipher text</td>"
 		for index,(plain,cipher) in enumerate(zip(self.plaintext, self.ciphertext)):
-			question_row += "<td>{}</td>".format(plain)
+			question_row += "<td>{0}</td>".format(plain)
 			if index in self.hotspots:
 				id = 'hotspot'+str(index)
 				if id in answer and answer[id] is not None: ### DR1
-					answer_row += '<td><input name="hotspot{}" value="{}"></input></td>'.format(index,answer[id]) ###DR2
+					answer_row += '<td><input name="hotspot{0}" value="{1}"></input></td>'.format(index,answer[id]) ###DR2
 				else:
-					answer_row += '<td><input name="hotspot{}"></input></td>'.format(index)
+					answer_row += '<td><input name="hotspot{0}"></input></td>'.format(index)
 			else:
-				answer_row += "<td>{}</td>".format(cipher)
+				answer_row += "<td>{0}</td>".format(cipher)
 		question_row += "</tr>"
 		answer_row += "</tr>"
 
-		html += "{}\n{}\n</table>".format(question_row,answer_row)
+		html += "{0}\n{1}\n</table>".format(question_row,answer_row)
 		return html +  "</div>"
 
 	def get_input_element_ids(self):

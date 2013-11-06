@@ -1,4 +1,4 @@
-#A2 TODO
+#A2 DONE
 
 import os
 import file_util
@@ -74,7 +74,7 @@ class caesar:
 		html += "<p>Use a <b>caesar</b> cipher with key {}"\
 				" to encrypt the plain text.</p>".format(self.key)
 
-		html += "<table>\n"
+		html += "<table cellspacing='0' cellpadding='3'>\n"
 
 		question_row = "<tr><td>plain text</td>"
 		answer_row = "<tr><td>cipher text</td>"
@@ -125,7 +125,6 @@ class caesar:
 style = '''
 	#question_cell div {
 		text-align:left;
-		width:75%;
 		margin:auto;
 	}
 	#question_cell table, #question_cell td {
@@ -135,12 +134,32 @@ style = '''
 		border:1px solid black;
 	}
 	#question_cell input {
-		width:1em;
+		width:2em;
+	}
+	#question_cell p {
+		text-align: center;
+	}
+	#question_cell table {
+		margin: auto;
 	}
 	td.top {
 		vertical-align:top;
 	}
 	td.left {
 		text-align:left;
+	}
+	#question_cell td {
+		border-style: solid;
+		border-color: black;
+		border-top-width: 1px;
+		border-left-width:1px;
+		text-align:center;
+	}
+	#question_cell tr > td:first-child{
+		text-align:right;
+		border-left-width:0px;
+	}
+	#question_cell tbody>tr:first-child td{
+		border-top-width:0px;
 	}
 '''

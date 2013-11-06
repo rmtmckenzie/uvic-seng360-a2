@@ -1,0 +1,19 @@
+DR1:
+
+
+
+DR2:
+
+
+
+
+DR3:
+
+
+
+DR4:
+We know that val is in the range 0...25 because it is an index of ALPHABET.
+K is a positive integer. Therefore val + k is a positive integer.
+(val + K) % 26 is a value in the range 0...25. Because the length
+of ALPHABET is 26, this is guaranteed to be a valid index.
+

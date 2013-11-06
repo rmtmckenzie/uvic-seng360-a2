@@ -1,0 +1,26 @@
+#A2 DONE
+DR1:
+Answer is checked for id before it is referenced, so therefore
+it answer[id] must exist.
+
+DR2:
+Given that answer is checked for id on line 85 and
+the code will not be executed if it doesn't,
+answer[id] must exist.
+
+DR3:
+The value of 'key' must be of the form hotspot<number> where
+<number> is in self.hotspots. Because of the template verification,
+all elements in hotspots are known valid indices of the plaintext.
+'ind' is this <number>.
+self.ciphertext is the same length as plaintext.
+
+Therefore, self.ciphertext[ind] is guaranteed to be valid, as 
+ind is a known valid index of the ciphertext.
+
+DR4:
+We know that val is in the range 0...25 because it is an index of ALPHABET.
+K is a positive integer. Therefore val + k is a positive integer.
+(val + K) % 26 is a value in the range 0...25. Because the length
+of ALPHABET is 26, this is guaranteed to be a valid index.
+

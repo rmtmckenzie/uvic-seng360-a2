@@ -4,10 +4,10 @@
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 def caesar_encrypt(P,K):
-'''Preconditions:
+	'''Preconditions:
 	P is a string of characters in the range A...Z
 	K is a positive integer
-'''
+	'''
 	result = []
 	for i in P:
 		val = ALPHABET.index(i)

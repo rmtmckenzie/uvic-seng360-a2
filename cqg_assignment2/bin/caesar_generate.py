@@ -10,7 +10,7 @@ template_string = '''\
 product_family = 'caesar'
 question_type = 'caesar'
 
-plaintext = {plaintext}
+plaintext = '{plaintext}'
 key = {key}
 hotspots = {hotspots}
 '''

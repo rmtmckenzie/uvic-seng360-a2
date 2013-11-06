@@ -22,8 +22,8 @@ class caesar:
 		self.question_library_path = question_library_path
 		self.question_path = question_path
 
-		self.plaintext = config.question_text
-		self.key = config.answers
+		self.plaintext = config.plaintext
+		self.key = config.key
 		self.hotspots = config.hotspots
 
 		self.ciphertext = caesar_util.caesar_encrypt(self.plaintext, self.key)
@@ -71,8 +71,8 @@ class caesar:
 					answer[K] == None
 		'''
 		html = "<div>"
-		html += "<p>Use a <b>caesar</b> cipher with key "+self.key+\
-				" to encrypt the plain text.</p>"
+		html += "<p>Use a <b>caesar</b> cipher with key {}"\
+				" to encrypt the plain text.</p>".format(self.key)
 
 		html += "<table>\n"
 
@@ -81,7 +81,7 @@ class caesar:
 		for index,(plain,cipher) in enumerate(zip(self.plaintext, self.ciphertext)):
 			question_row += "<td>{}</td>".format(plain)
 			if index in self.hotspots:
-				answer_row += '<td><input id="hotspot{}"></input></td>'.format(item)
+				answer_row += '<td><input id="hotspot{}"></input></td>'.format(index)
 			else:
 				answer_row += "<td>{}</td>".format(cipher)
 		question_row += "</tr>"
@@ -98,7 +98,7 @@ class caesar:
 		preconditions
 			None
 		'''
-		return ["hotspot"+i for i in self.hotspots]
+		return ["hotspot"+str(i) for i in self.hotspots]
 
 	def check_answer(self,answer):
 		'''
@@ -133,6 +133,9 @@ style = '''
 	}
 	#question_cell {
 		border:1px solid black;
+	}
+	#question_cell input {
+		width:1em;
 	}
 	td.top {
 		vertical-align:top;

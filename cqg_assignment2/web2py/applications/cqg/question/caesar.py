@@ -81,14 +81,18 @@ class caesar:
 		for index,(plain,cipher) in enumerate(zip(self.plaintext, self.ciphertext)):
 			question_row += "<td>{}</td>".format(plain)
 			if index in self.hotspots:
-				answer_row += '<td><input id="hotspot{}"></input></td>'.format(index)
+				id = 'hotspot'+str(index)
+				if id in answer and answer[id] is not None: ### DR1
+					answer_row += '<td><input name="hotspot{}" value="{}"></input></td>'.format(index,answer[id]) ###DR2
+				else:
+					answer_row += '<td><input name="hotspot{}"></input></td>'.format(index)
 			else:
 				answer_row += "<td>{}</td>".format(cipher)
 		question_row += "</tr>"
 		answer_row += "</tr>"
 
 		html += "{}\n{}\n</table>".format(question_row,answer_row)
-		return html + "</div>"
+		return html +  "</div>"
 
 	def get_input_element_ids(self):
 		'''
@@ -110,17 +114,18 @@ class caesar:
 				if K was not in submitted answer
 					answer[K] == None
 		'''
-		for key,value in answer:
+		self.TEMP = str(answer)
+		for key,value in answer.items():
 			ind = int(key.replace('hotspot',''))
-			if self.answer[ind] == value:
+			if self.ciphertext[ind] == value: ###DR3
 				continue
 			else:
 				break
 		else:
 			#this is valid python. This is executed iff
 			# the loop finishes without a break.
-			return true
-		return false
+			return True
+		return False
 
 style = '''
 	#question_cell div {

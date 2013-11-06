@@ -1,1 +1,46 @@
-#A2 TODO
+#A2 DONE
+Caesar Encrpytion Question Manual Test Plan
+
+Open URL
+	http://localhost:7777/cqg/quiz?spec=test_caesar
+
+PF	a caesar encryption question appears
+
+PF	display table has 1 column
+
+PF	all cells have black border
+
+-----  question cell
+
+PF	Question text is centered within the display table
+
+PF 	Word 'caesar' in question text is bolded
+
+PF	Below the question test is a table with two rows the first of which begins with a cell reading 'plain text' followed by cells, each of which contains a single capital letter
+
+PF	The second row of the table contains a first cell with the words 'cypher text' followed by cells with either a single capital letter or a small text field
+
+PF	The borders of each cell exist but no border is present on the outside edge of the table.
+
+PF	The first cell's contents of each row are right aligned
+
+PF	All other cells in the table are center aligned
+
+----- answer checking
+
+Leave the text fields blank and press the Check Answer
+
+PF	"Incorrect" displayed in red
+
+Insert 'E' into the first text field in the second row and 'I' into the second, then press Check answer
+
+PF	"Correct" displayed in green
+
+----- layout edge cases
+
+press the "2" button
+
+PF	The long table is still centered and has appropriate margins of around 10%
+
+PF  Each cell contains a single line and no cell wraps within itself
+
